@@ -5,7 +5,7 @@ from django.db.models import Q
 from .models import Client, Culture, ProduitArrosage
 from .forms import ClientForm, CultureForm, ProduitArrosageForm, ClientSearchForm
 from accounts.decorators import staff_required, vendeur_or_directeur
-from products.models import RecommandationProduit
+from products.engine import generer_recommandations
 
 
 @login_required
@@ -45,13 +45,7 @@ def client_detail(request, pk):
     cultures = client.cultures.all()
     commandes = client.commandes.all()[:10]
 
-    recommandations = {}
-    for culture in cultures:
-        recos = RecommandationProduit.objects.filter(
-            type_culture=culture.type_culture
-        ).select_related('produit')
-        if recos.exists():
-            recommandations[culture] = recos
+    recommandations = generer_recommandations(client)
 
     return render(request, 'clients/client_detail.html', {
         'client': client,

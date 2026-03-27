@@ -10,6 +10,7 @@ class CategorieProduitAdmin(admin.ModelAdmin):
 
 class RecommandationInline(admin.TabularInline):
     model = RecommandationProduit
+    fk_name = 'produit'
     extra = 0
 
 

@@ -152,16 +152,40 @@
     </div>
     {% endfor %}
 
-    {# Recommandations #}
+    {# Recommandations intelligentes #}
     {% if recommandations %}
     <div class="info-section">
         <div class="info-section-title"><i class="bi bi-lightbulb-fill"></i> Produits recommandés</div>
         {% for culture, recos in recommandations.items %}
-        <div style="font-size:0.78rem;color:#888;font-weight:600;margin-bottom:4px;">{{ culture.get_type_culture_display|upper }}</div>
+        <div style="font-size:0.78rem;color:#888;font-weight:600;margin:8px 0 4px;">
+            {{ culture.get_type_culture_display|upper }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres }} ac)
+        </div>
         {% for reco in recos %}
-        <div class="reco-card">
-            <div class="reco-name">{{ reco.produit.nom }}</div>
-            <div class="reco-detail">{{ reco.produit.format_produit }}{% if reco.description %} &middot; {{ reco.description }}{% endif %}</div>
+        <div class="reco-card {% if reco.deja_achete %}reco-bought{% endif %}" style="{% if reco.deja_achete %}opacity:0.6;{% endif %}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="reco-name">
+                        {{ reco.produit.nom }}
+                        {% if reco.deja_achete %}<i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:0.75rem;"></i>{% endif %}
+                    </div>
+                    <div class="reco-detail">
+                        {{ reco.produit.format_produit }}
+                        {% if reco.dose %} &middot; {{ reco.dose }}{% endif %}
+                    </div>
+                </div>
+                {% if reco.quantite_estimee %}
+                <div style="text-align:right;flex-shrink:0;margin-left:8px;">
+                    <div style="font-weight:800;font-size:0.95rem;color:var(--herbic-green-dark);">{{ reco.quantite_estimee }}</div>
+                    <div style="font-size:0.65rem;color:#999;">QTÉ ESTIMÉE</div>
+                </div>
+                {% endif %}
+            </div>
+            {% for tag, raison in reco.raisons %}
+            <div style="font-size:0.72rem;margin-top:2px;{% if tag == 'alerte' %}color:#ef4444;{% elif tag == 'saison' %}color:#8b5cf6;{% elif tag == 'complement' %}color:#06b6d4;{% else %}color:#888;{% endif %}">
+                {% if tag == 'alerte' %}<i class="bi bi-exclamation-triangle-fill"></i>{% elif tag == 'saison' %}<i class="bi bi-calendar3"></i>{% elif tag == 'complement' %}<i class="bi bi-link-45deg"></i>{% else %}<i class="bi bi-info-circle"></i>{% endif %}
+                {{ raison }}
+            </div>
+            {% endfor %}
         </div>
         {% endfor %}
         {% endfor %}
@@ -296,7 +320,7 @@
     <div class="empty-state"><i class="bi bi-flower2"></i><p>Aucune culture enregistrée.</p></div>
     {% endfor %}
 
-    {# Recommandations #}
+    {# Recommandations intelligentes #}
     {% if recommandations %}
     <div class="card mt-4">
         <div class="card-header" style="background:var(--herbic-green-50);color:var(--herbic-green-dark);">
@@ -304,14 +328,31 @@
         </div>
         <div class="card-body">
             {% for culture, recos in recommandations.items %}
-            <h6 style="font-weight:700;font-size:0.85rem;color:var(--text-secondary);margin-top:{% if not forloop.first %}16px{% else %}0{% endif %};">{{ culture.get_type_culture_display }} ({{ culture.annee }})</h6>
-            <div class="row g-2 mb-2">
+            <h6 style="font-weight:700;font-size:0.88rem;color:var(--text-secondary);margin-top:{% if not forloop.first %}20px{% else %}0{% endif %};margin-bottom:12px;">
+                {{ culture.get_type_culture_display }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres }} acres, {{ culture.annee }})
+            </h6>
+            <div class="row g-3 mb-2">
                 {% for reco in recos %}
-                <div class="col-xl-3 col-md-4">
-                    <div class="reco-card-desktop">
-                        <strong>{{ reco.produit.nom }}</strong><br>
-                        <small style="color:var(--text-muted);">{{ reco.produit.format_produit }}</small>
-                        {% if reco.description %}<br><small style="color:var(--text-secondary);">{{ reco.description }}</small>{% endif %}
+                <div class="col-xl-4 col-md-6">
+                    <div class="reco-card-desktop h-100" style="{% if reco.deja_achete %}opacity:0.55;{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <strong>
+                                {{ reco.produit.nom }}
+                                {% if reco.deja_achete %}<i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:0.7rem;"></i>{% endif %}
+                            </strong>
+                            {% if reco.quantite_estimee %}
+                            <span style="background:var(--herbic-green);color:white;border-radius:6px;padding:2px 8px;font-size:0.72rem;font-weight:700;white-space:nowrap;">
+                                {{ reco.quantite_estimee }} est.
+                            </span>
+                            {% endif %}
+                        </div>
+                        <small style="color:var(--text-muted);">{{ reco.produit.format_produit }}{% if reco.dose %} &middot; {{ reco.dose }}{% endif %}</small>
+                        {% for tag, raison in reco.raisons %}
+                        <div style="font-size:0.75rem;margin-top:3px;{% if tag == 'alerte' %}color:#ef4444;font-weight:600;{% elif tag == 'saison' %}color:#8b5cf6;{% elif tag == 'complement' %}color:#06b6d4;{% else %}color:var(--text-secondary);{% endif %}">
+                            {% if tag == 'alerte' %}<i class="bi bi-exclamation-triangle-fill"></i>{% elif tag == 'saison' %}<i class="bi bi-calendar3"></i>{% elif tag == 'complement' %}<i class="bi bi-link-45deg"></i>{% else %}<i class="bi bi-info-circle"></i>{% endif %}
+                            {{ raison }}
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endfor %}

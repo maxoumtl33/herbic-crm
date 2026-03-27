@@ -33,9 +33,16 @@ class CategorieForm(forms.ModelForm):
 class RecommandationForm(forms.ModelForm):
     class Meta:
         model = RecommandationProduit
-        fields = ['produit', 'type_culture', 'priorite', 'description']
+        fields = [
+            'produit', 'type_culture', 'priorite', 'saison',
+            'dose_par_acre', 'complementaire_de', 'probleme_cible',
+            'description',
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
+        self.fields['description'].widget.attrs['rows'] = 2
+        self.fields['complementaire_de'].required = False
+        self.fields['complementaire_de'].empty_label = '(aucun)'

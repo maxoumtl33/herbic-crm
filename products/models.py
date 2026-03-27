@@ -57,10 +57,39 @@ class Produit(models.Model):
 
 class RecommandationProduit(models.Model):
     """Lie un produit à un type de culture pour les recommandations automatiques."""
+
+    class Saison(models.TextChoices):
+        PRE_SEMIS = 'pre_semis', 'Pré-semis (mars-avril)'
+        SEMIS = 'semis', 'Semis (mai)'
+        POST_LEVEE = 'post_levee', 'Post-levée (juin)'
+        CROISSANCE = 'croissance', 'Croissance (juillet)'
+        FLORAISON = 'floraison', 'Floraison (juillet-août)'
+        RECOLTE = 'recolte', 'Pré-récolte (sept-oct)'
+        TOUTE_SAISON = 'toute_saison', 'Toute la saison'
+
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE, related_name='recommandations')
     type_culture = models.CharField(max_length=20)
     priorite = models.IntegerField(default=0, help_text='Plus élevé = recommandé en premier')
     description = models.TextField('Pourquoi recommander', blank=True)
+    dose_par_acre = models.CharField(
+        'Dose recommandée par acre', max_length=100, blank=True,
+        help_text='Ex: 1.67 L/acre, 80 000 grains/acre',
+    )
+    saison = models.CharField(
+        max_length=20,
+        choices=Saison.choices,
+        default=Saison.TOUTE_SAISON,
+    )
+    complementaire_de = models.ForeignKey(
+        Produit, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='produits_complementaires',
+        help_text='Si le client achète ce produit, recommander le produit principal',
+    )
+    probleme_cible = models.CharField(
+        'Problème ciblé', max_length=200, blank=True,
+        help_text='Ex: chrysomèle, cercospora, mauvaises herbes résistantes',
+    )
 
     def __str__(self):
         return f"{self.produit.nom} -> {self.type_culture}"

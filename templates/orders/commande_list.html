@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Commandes - Herbic CRM{% endblock %}
+{% block sidebar_commandes %}active{% endblock %}
+{% block topbar_title %}Commandes{% endblock %}
+{% block topbar_actions %}
+{% if user.is_directeur %}
+<a href="{% url 'orders:commande_create' %}" class="btn btn-sm btn-success"><i class="bi bi-cart-plus"></i> Nouvelle commande</a>
+{% endif %}
+{% endblock %}
+{% block nav_commandes %}active{% endblock %}
+{% block content %}
+
+{# ======= MOBILE (vendeur) ======= #}
+<div class="mobile-only">
+    <div class="page-title-mobile"><i class="bi bi-cart-fill text-herbic"></i> Commandes</div>
+    <div class="quick-actions" style="padding:0 0 10px;gap:6px;">
+        <a href="{% url 'orders:commande_list' %}" class="btn btn-sm {% if not statut_actif %}btn-herbic{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;white-space:nowrap;">Toutes</a>
+        {% for val, label in statuts %}
+        <a href="?statut={{ val }}" class="btn btn-sm {% if statut_actif == val %}btn-herbic{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;white-space:nowrap;">{{ label }}</a>
+        {% endfor %}
+    </div>
+    {% for cmd in commandes %}
+    <a href="{% url 'orders:commande_detail' cmd.pk %}" class="commande-card-mobile">
+        <div class="d-flex justify-content-between align-items-start mb-1">
+            <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong>
+            <span class="badge bg-{{ cmd.statut }}">{{ cmd.get_statut_display }}</span>
+        </div>
+        <div style="font-size:0.9rem;color:#333;">{{ cmd.client.nom_ferme }}</div>
+        <div class="d-flex justify-content-between mt-1" style="font-size:0.78rem;color:#999;">
+            <span><i class="bi bi-calendar3"></i> {{ cmd.date_commande|date:"d/m/Y" }}</span>
+            {% if cmd.date_livraison_prevue %}<span><i class="bi bi-truck"></i> {{ cmd.date_livraison_prevue|date:"d/m/Y" }}</span>{% endif %}
+        </div>
+    </a>
+    {% empty %}
+    <div class="text-center py-5"><i class="bi bi-cart" style="font-size:2.5rem;color:#ccc;"></i><p class="text-muted mt-2">Aucune commande.</p></div>
+    {% endfor %}
+    {% if user.is_vendeur or user.is_directeur %}
+    <a href="{% url 'orders:commande_create' %}" style="position:fixed;bottom:85px;right:16px;width:56px;height:56px;border-radius:50%;background:var(--herbic-green);color:white;display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:1035;text-decoration:none;"><i class="bi bi-plus-lg"></i></a>
+    {% endif %}
+</div>
+
+{# ======= DESKTOP ======= #}
+<div class="desktop-only">
+    {# Filtres #}
+    <div class="d-flex gap-2 mb-4 flex-wrap">
+        <a href="{% url 'orders:commande_list' %}" class="btn btn-sm {% if not statut_actif %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">Toutes</a>
+        {% for val, label in statuts %}
+        <a href="?statut={{ val }}" class="btn btn-sm {% if statut_actif == val %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr><th>No</th><th>Client</th><th>Vendeur</th><th>Statut</th><th>Date</th><th>Livraison prévue</th><th></th></tr>
+                </thead>
+                <tbody>
+                {% for cmd in commandes %}
+                <tr>
+                    <td><a href="{% url 'orders:commande_detail' cmd.pk %}">CMD-{{ cmd.pk|stringformat:"05d" }}</a></td>
+                    <td style="font-weight:600;">{{ cmd.client.nom_ferme }}</td>
+                    <td>{{ cmd.vendeur.get_full_name|default:"-" }}</td>
+                    <td><span class="badge bg-{{ cmd.statut }}">{{ cmd.get_statut_display }}</span></td>
+                    <td style="color:var(--text-muted);">{{ cmd.date_commande|date:"d/m/Y H:i" }}</td>
+                    <td style="color:var(--text-muted);">{{ cmd.date_livraison_prevue|date:"d/m/Y"|default:"-" }}</td>
+                    <td><a href="{% url 'orders:commande_detail' cmd.pk %}" class="btn btn-sm btn-outline-primary">Voir</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center py-4" style="color:var(--text-muted);">Aucune commande.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

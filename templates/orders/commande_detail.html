@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}CMD-{{ commande.pk|stringformat:"05d" }} - Herbic CRM{% endblock %}
+{% block sidebar_commandes %}active{% endblock %}
+{% block topbar_title %}Commande CMD-{{ commande.pk|stringformat:"05d" }}{% endblock %}
+{% block nav_commandes %}active{% endblock %}
+{% block content %}
+
+{# ======= MOBILE (vendeur) ======= #}
+<div class="mobile-only">
+    <div class="page-title-mobile">
+        <a href="{% url 'orders:commande_list' %}" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+        <div>CMD-{{ commande.pk|stringformat:"05d" }} <span class="badge bg-{{ commande.statut }}">{{ commande.get_statut_display }}</span></div>
+    </div>
+    <div class="info-section">
+        <div class="info-row"><span class="info-label">Client</span><a href="{% url 'clients:client_detail' commande.client.pk %}" class="info-value text-primary">{{ commande.client.nom_ferme }}</a></div>
+        <div class="info-row"><span class="info-label">Date</span><span class="info-value">{{ commande.date_commande|date:"d/m/Y H:i" }}</span></div>
+        {% if commande.date_livraison_prevue %}<div class="info-row"><span class="info-label">Livraison</span><span class="info-value">{{ commande.date_livraison_prevue|date:"d/m/Y" }}</span></div>{% endif %}
+        {% if commande.notes %}<div class="mt-2 p-2" style="background:#f9f9f9;border-radius:8px;font-size:0.85rem;"><i class="bi bi-chat-text text-muted"></i> {{ commande.notes }}</div>{% endif %}
+    </div>
+    {% if user.has_staff_access %}
+    <div class="info-section">
+        <div class="info-section-title">Statut</div>
+        <form method="post" action="{% url 'orders:commande_update_statut' commande.pk %}">
+            {% csrf_token %}
+            <div class="d-flex gap-2">
+                <select name="statut" class="form-select">{% for val, label in commande.Statut.choices %}<option value="{{ val }}" {% if commande.statut == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+                <button type="submit" class="btn btn-herbic" style="white-space:nowrap;"><i class="bi bi-check"></i> OK</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+    <div class="info-section">
+        <div class="info-section-title">Produits commandés</div>
+        {% for ligne in commande.lignes.all %}
+        <div style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+            <div class="d-flex justify-content-between">
+                <div><strong style="font-size:0.9rem;">{{ ligne.produit.nom }}</strong><div style="font-size:0.78rem;color:#888;">{{ ligne.produit.code }} &middot; {{ ligne.produit.format_produit }}</div></div>
+                <div class="text-end"><div style="font-weight:700;">x {{ ligne.quantite }}</div>{% if ligne.sous_total %}<div style="font-size:0.85rem;color:var(--herbic-green);">${{ ligne.sous_total }}</div>{% endif %}</div>
+            </div>
+        </div>
+        {% empty %}<p class="text-muted">Aucun produit.</p>{% endfor %}
+        {% if commande.total %}
+        <div class="d-flex justify-content-between mt-3 pt-2" style="border-top:2px solid var(--herbic-green-light);"><strong style="font-size:1.1rem;">Total</strong><strong style="font-size:1.1rem;color:var(--herbic-green);">${{ commande.total }}</strong></div>
+        {% endif %}
+    </div>
+</div>
+
+{# ======= DESKTOP ======= #}
+<div class="desktop-only">
+    <div class="breadcrumb-subtle">
+        <a href="{% url 'orders:commande_list' %}">Commandes</a> / CMD-{{ commande.pk|stringformat:"05d" }}
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Informations</span>
+                    <span class="badge bg-{{ commande.statut }}" style="font-size:0.82rem;">{{ commande.get_statut_display }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="culture-detail-item"><span class="culture-detail-label">Client</span><a href="{% url 'clients:client_detail' commande.client.pk %}" class="culture-detail-value" style="color:var(--herbic-green);">{{ commande.client.nom_ferme }}</a></div>
+                            <div class="culture-detail-item"><span class="culture-detail-label">Vendeur</span><span class="culture-detail-value">{{ commande.vendeur.get_full_name|default:"-" }}</span></div>
+                            <div class="culture-detail-item"><span class="culture-detail-label">Préparateur</span><span class="culture-detail-value">{{ commande.preparateur.get_full_name|default:"Non assigné" }}</span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="culture-detail-item"><span class="culture-detail-label">Date commande</span><span class="culture-detail-value">{{ commande.date_commande|date:"d/m/Y H:i" }}</span></div>
+                            <div class="culture-detail-item"><span class="culture-detail-label">Livraison prévue</span><span class="culture-detail-value">{{ commande.date_livraison_prevue|date:"d/m/Y"|default:"-" }}</span></div>
+                        </div>
+                    </div>
+                    {% if commande.notes %}
+                    <div class="mt-3 p-3" style="background:var(--body-bg);border-radius:8px;font-size:0.88rem;color:var(--text-secondary);">
+                        <i class="bi bi-chat-text me-1"></i> {{ commande.notes }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            {% if user.has_staff_access %}
+            <div class="card">
+                <div class="card-header">Changer le statut</div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'orders:commande_update_statut' commande.pk %}">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <select name="statut" class="form-select">
+                                {% for val, label in commande.Statut.choices %}
+                                <option value="{{ val }}" {% if commande.statut == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-herbic" style="white-space:nowrap;">Mettre à jour</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Lignes de commande</div>
+        <div class="card-body p-0">
+            <table class="table mb-0">
+                <thead><tr><th>Code</th><th>Produit</th><th>Format</th><th>Quantité</th><th>Prix unit.</th><th>Sous-total</th></tr></thead>
+                <tbody>
+                {% for ligne in commande.lignes.all %}
+                <tr>
+                    <td style="color:var(--text-muted);">{{ ligne.produit.code }}</td>
+                    <td style="font-weight:600;">{{ ligne.produit.nom }}</td>
+                    <td>{{ ligne.produit.format_produit }}</td>
+                    <td>{{ ligne.quantite }}</td>
+                    <td>{% if ligne.prix_unitaire %}${{ ligne.prix_unitaire }}{% else %}-{% endif %}</td>
+                    <td style="font-weight:600;">{% if ligne.sous_total %}${{ ligne.sous_total }}{% else %}-{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center py-3" style="color:var(--text-muted);">Aucun produit.</td></tr>
+                {% endfor %}
+                </tbody>
+                {% if commande.total %}
+                <tfoot><tr style="background:var(--herbic-green-50);"><td colspan="5" class="text-end" style="font-weight:700;">Total</td><td style="font-weight:800;font-size:1.05rem;color:var(--herbic-green);">${{ commande.total }}</td></tr></tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

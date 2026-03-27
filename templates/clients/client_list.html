@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Clients - Herbic CRM{% endblock %}
+{% block sidebar_clients %}active{% endblock %}
+{% block topbar_title %}Clients{% endblock %}
+{% block topbar_actions %}
+{% if user.is_directeur %}
+<a href="{% url 'clients:client_create' %}" class="btn btn-sm btn-herbic"><i class="bi bi-person-plus"></i> Nouveau client</a>
+{% endif %}
+{% endblock %}
+{% block nav_clients %}active{% endblock %}
+{% block content %}
+
+{# ======= MOBILE ======= #}
+<div class="mobile-only">
+    <div class="page-title-mobile">
+        <i class="bi bi-people-fill text-herbic"></i> Clients
+    </div>
+
+    <form method="get">
+        <div class="search-bar-mobile">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" name="q" placeholder="Nom, ferme, ville, code..." value="{{ search_form.q.value|default:'' }}" autocomplete="off">
+        </div>
+    </form>
+
+    {% for client in clients %}
+    <a href="{% url 'clients:client_detail' client.pk %}" class="client-card-mobile">
+        <div class="d-flex justify-content-between align-items-start">
+            <div style="flex:1;min-width:0;">
+                <div class="client-name text-truncate">{{ client.nom_ferme }}</div>
+                <div class="client-farm">{{ client.prenom }} {{ client.nom }}</div>
+                <div class="client-meta">
+                    <i class="bi bi-geo-alt"></i> {{ client.ville }}
+                    {% if client.cellulaire %} &middot; <i class="bi bi-phone"></i> {{ client.cellulaire }}{% endif %}
+                </div>
+            </div>
+            <i class="bi bi-chevron-right text-muted" style="margin-top:10px;flex-shrink:0;"></i>
+        </div>
+    </a>
+    {% empty %}
+    <div class="text-center py-5">
+        <i class="bi bi-search" style="font-size:2.5rem;color:#ccc;"></i>
+        <p class="text-muted mt-2">Aucun client trouvé.</p>
+        <a href="{% url 'clients:client_create' %}" class="btn btn-herbic">
+            <i class="bi bi-person-plus"></i> Créer un client
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+{# ======= DESKTOP ======= #}
+<div class="desktop-only">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-people"></i> Clients</h2>
+        {% if user.is_vendeur or user.is_directeur %}
+        <a href="{% url 'clients:client_create' %}" class="btn btn-herbic">
+            <i class="bi bi-person-plus"></i> Nouveau client
+        </a>
+        {% endif %}
+    </div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2">
+                <div class="col-md-10">{{ search_form.q }}</div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-herbic w-100"><i class="bi bi-search"></i> Rechercher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>Code</th><th>Ferme</th><th>Nom</th><th>Ville</th><th>Téléphone</th><th>Vendeur</th><th></th></tr>
+                </thead>
+                <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td>{{ client.code }}</td>
+                    <td><strong>{{ client.nom_ferme }}</strong></td>
+                    <td>{{ client.prenom }} {{ client.nom }}</td>
+                    <td>{{ client.ville }}</td>
+                    <td>{{ client.cellulaire|default:client.telephone }}</td>
+                    <td>{{ client.vendeur.get_full_name|default:"-" }}</td>
+                    <td><a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Voir</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-muted text-center">Aucun client trouvé.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

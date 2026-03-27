@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ produit.nom }} - Herbic CRM{% endblock %}
+{% block sidebar_produits %}active{% endblock %}
+{% block topbar_title %}Détail produit{% endblock %}
+{% block content %}
+<div class="breadcrumb-subtle">
+    <a href="{% url 'products:produit_list' %}">Produits</a> / {{ produit.nom }}
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>{{ produit.nom }}</span>
+                <span class="badge {% if produit.en_stock %}bg-livree{% else %}bg-nouvelle{% endif %}">{% if produit.en_stock %}En stock{% else %}Rupture{% endif %}</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="culture-detail-item"><span class="culture-detail-label">Code</span><span class="culture-detail-value">{{ produit.code }}</span></div>
+                        <div class="culture-detail-item"><span class="culture-detail-label">Catégorie</span><span class="culture-detail-value">{{ produit.categorie }}</span></div>
+                        <div class="culture-detail-item"><span class="culture-detail-label">Format</span><span class="culture-detail-value">{{ produit.format_produit }}</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        {% if produit.prix_unitaire %}
+                        <div class="culture-detail-item"><span class="culture-detail-label">Prix unitaire</span><span class="culture-detail-value" style="font-size:1.1rem;color:var(--herbic-green);">${{ produit.prix_unitaire }}</span></div>
+                        {% endif %}
+                        {% if produit.culture_recommandee %}
+                        <div class="culture-detail-item"><span class="culture-detail-label">Cultures</span><span class="culture-detail-value">{{ produit.culture_recommandee }}</span></div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if produit.description %}
+                <hr>
+                <h6 style="font-weight:700;font-size:0.85rem;color:var(--text-secondary);">Description</h6>
+                <p style="font-size:0.9rem;color:var(--text-secondary);">{{ produit.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        {% if produit.image %}
+        <img src="{{ produit.image.url }}" class="img-fluid rounded mb-3" style="border-radius:var(--card-border-radius) !important;">
+        {% endif %}
+        {% if user.is_directeur %}
+        <a href="{% url 'products:produit_edit' produit.pk %}" class="btn btn-herbic w-100 mb-2"><i class="bi bi-pencil me-1"></i> Modifier</a>
+        {% endif %}
+        <a href="{% url 'products:produit_list' %}" class="btn btn-outline-primary w-100">Retour aux produits</a>
+    </div>
+</div>
+{% endblock %}

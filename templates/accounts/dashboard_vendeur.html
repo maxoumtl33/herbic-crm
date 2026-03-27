@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}Accueil - Herbic CRM{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block sidebar_dashboard %}active{% endblock %}
+{% block topbar_title %}Tableau de bord{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'clients:client_create' %}" class="btn btn-sm btn-herbic me-2"><i class="bi bi-person-plus"></i> Nouveau client</a>
+<a href="{% url 'orders:commande_create' %}" class="btn btn-sm btn-success"><i class="bi bi-cart-plus"></i> Commande</a>
+{% endblock %}
+{% block content %}
+
+{# ======= MOBILE ======= #}
+<div class="mobile-only">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <div class="text-muted" style="font-size:0.8rem;">Bonjour,</div>
+            <div style="font-size:1.3rem;font-weight:700;">{{ user.first_name|default:user.username }}</div>
+        </div>
+    </div>
+    <div class="stat-grid mb-3">
+        <div class="stat-box">
+            <div class="stat-box-value">{{ clients.count }}</div>
+            <div class="stat-box-label">Clients</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-value">{{ commandes_recentes.count }}</div>
+            <div class="stat-box-label">Commandes</div>
+        </div>
+        <div class="stat-box">
+            <a href="{% url 'orders:commande_create' %}" class="text-decoration-none">
+                <div class="stat-box-value text-success"><i class="bi bi-cart-plus"></i></div>
+                <div class="stat-box-label">Commande</div>
+            </a>
+        </div>
+    </div>
+    <form method="get" action="{% url 'clients:client_list' %}">
+        <div class="search-bar-mobile">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" name="q" placeholder="Rechercher un client..." autocomplete="off">
+        </div>
+    </form>
+    <div class="info-section-title mt-3"><i class="bi bi-people-fill"></i> Mes clients</div>
+    {% for client in clients %}
+    <a href="{% url 'clients:client_detail' client.pk %}" class="client-card-mobile">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <div class="client-name">{{ client.nom_ferme }}</div>
+                <div class="client-farm">{{ client.prenom }} {{ client.nom }}</div>
+                <div class="client-meta"><i class="bi bi-geo-alt"></i> {{ client.ville }}</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted" style="margin-top:8px;"></i>
+        </div>
+    </a>
+    {% empty %}
+    <p class="text-muted text-center py-3">Aucun client assigné.</p>
+    {% endfor %}
+    {# Livraisons à faire #}
+    {% if commandes_en_livraison %}
+    <div class="info-section-title mt-3"><i class="bi bi-truck"></i> À livrer</div>
+    {% for cmd in commandes_en_livraison %}
+    <div class="info-section" style="margin-bottom:8px;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong> - {{ cmd.client.nom_ferme }}
+                {% if cmd.date_livraison_prevue %}<div style="font-size:0.78rem;color:#999;"><i class="bi bi-calendar3"></i> {{ cmd.date_livraison_prevue|date:"d/m/Y" }}</div>{% endif %}
+            </div>
+            <form method="post" action="{% url 'orders:commande_update_statut' cmd.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="statut" value="livree">
+                <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Livrée</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {# Commandes prêtes à chercher #}
+    {% if commandes_pretes %}
+    <div class="info-section-title mt-3"><i class="bi bi-box-seam-fill"></i> Prêtes au magasin</div>
+    {% for cmd in commandes_pretes %}
+    <div class="info-section" style="margin-bottom:8px;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong> - {{ cmd.client.nom_ferme }}
+            </div>
+            <span class="badge bg-prete">Prête</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if commandes_recentes %}
+    <div class="info-section-title mt-3"><i class="bi bi-cart-fill"></i> Commandes récentes</div>
+    {% for cmd in commandes_recentes %}
+    <a href="{% url 'orders:commande_detail' cmd.pk %}" class="commande-card-mobile">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong>
+                <div style="font-size:0.85rem;color:#666;">{{ cmd.client.nom_ferme }}</div>
+            </div>
+            <span class="badge bg-{{ cmd.statut }}">{{ cmd.get_statut_display }}</span>
+        </div>
+    </a>
+    {% endfor %}
+    {% endif %}
+</div>
+
+{# ======= DESKTOP ======= #}
+<div class="desktop-only">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-card-value text-herbic">{{ clients.count }}</div>
+                <div class="stat-card-label">Clients assignés</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-card-value" style="color:#f59e0b;">{{ commandes_recentes.count }}</div>
+                <div class="stat-card-label">Commandes récentes</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <a href="{% url 'clients:client_list' %}" class="btn btn-herbic w-100"><i class="bi bi-search me-1"></i> Rechercher un client</a>
+            </div>
+        </div>
+    </div>
+    {# Livraisons en cours #}
+    {% if commandes_en_livraison %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:#f5f3ff;color:#5b21b6;">
+            <span><i class="bi bi-truck me-2"></i>À livrer ({{ commandes_en_livraison.count }})</span>
+        </div>
+        <div class="card-body p-0">
+            {% for cmd in commandes_en_livraison %}
+            <div class="d-flex justify-content-between align-items-center px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+                <div>
+                    <a href="{% url 'orders:commande_detail' cmd.pk %}"><strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong></a>
+                    <span class="ms-2" style="font-weight:600;">{{ cmd.client.nom_ferme }}</span>
+                    {% if cmd.date_livraison_prevue %}
+                    <span class="ms-2" style="font-size:0.82rem;color:var(--text-muted);"><i class="bi bi-calendar3"></i> {{ cmd.date_livraison_prevue|date:"d/m/Y" }}</span>
+                    {% endif %}
+                </div>
+                <form method="post" action="{% url 'orders:commande_update_statut' cmd.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="statut" value="livree">
+                    <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-circle"></i> Confirmer livrée</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# Prêtes au magasin #}
+    {% if commandes_pretes %}
+    <div class="card mb-4">
+        <div class="card-header" style="background:#f0fdf4;color:#166534;">
+            <i class="bi bi-box-seam me-2"></i>Prêtes au magasin ({{ commandes_pretes.count }})
+        </div>
+        <div class="card-body p-0">
+            {% for cmd in commandes_pretes %}
+            <div class="d-flex justify-content-between align-items-center px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+                <div>
+                    <a href="{% url 'orders:commande_detail' cmd.pk %}"><strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong></a>
+                    <span class="ms-2" style="font-weight:600;">{{ cmd.client.nom_ferme }}</span>
+                </div>
+                <span class="badge bg-prete">Prête</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-people me-2"></i>Mes clients</span>
+                    <a href="{% url 'clients:client_list' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Ferme</th><th>Nom</th><th>Ville</th><th></th></tr></thead>
+                        <tbody>
+                        {% for client in clients %}
+                        <tr>
+                            <td style="font-weight:600;">{{ client.nom_ferme }}</td>
+                            <td>{{ client.prenom }} {{ client.nom }}</td>
+                            <td style="color:var(--text-muted);">{{ client.ville }}</td>
+                            <td><a href="{% url 'clients:client_detail' client.pk %}" class="btn btn-sm btn-outline-primary">Voir</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center py-3" style="color:var(--text-muted);">Aucun client.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-cart3 me-2"></i>Commandes récentes</span>
+                    <a href="{% url 'orders:commande_list' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>No</th><th>Client</th><th>Statut</th></tr></thead>
+                        <tbody>
+                        {% for cmd in commandes_recentes %}
+                        <tr>
+                            <td><a href="{% url 'orders:commande_detail' cmd.pk %}">CMD-{{ cmd.pk|stringformat:"05d" }}</a></td>
+                            <td>{{ cmd.client.nom_ferme }}</td>
+                            <td><span class="badge bg-{{ cmd.statut }}">{{ cmd.get_statut_display }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center py-3" style="color:var(--text-muted);">Aucune commande.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Produits - Herbic CRM{% endblock %}
+{% block sidebar_produits %}active{% endblock %}
+{% block topbar_title %}Catalogue produits{% endblock %}
+{% block topbar_actions %}
+{% if user.is_directeur %}
+<a href="{% url 'products:produit_create' %}" class="btn btn-sm btn-herbic"><i class="bi bi-plus-lg"></i> Nouveau produit</a>
+{% endif %}
+{% endblock %}
+{% block nav_produits %}active{% endblock %}
+{% block content %}
+
+{# Mobile #}
+<div class="mobile-only">
+    <div class="page-title-mobile"><i class="bi bi-box-seam-fill text-herbic"></i> Produits</div>
+    <form method="get">
+        <div class="search-bar-mobile mb-2">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" name="q" placeholder="Rechercher un produit..." value="{{ q }}" autocomplete="off">
+        </div>
+        <div class="quick-actions" style="padding:0 0 10px;gap:6px;">
+            <a href="{% url 'products:produit_list' %}" class="btn btn-sm {% if not categorie_active %}btn-herbic{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;white-space:nowrap;">Tout</a>
+            {% for val, label in categories %}
+            <a href="?categorie={{ val }}" class="btn btn-sm {% if categorie_active == val %}btn-herbic{% else %}btn-outline-secondary{% endif %}" style="border-radius:20px;white-space:nowrap;">{{ label }}</a>
+            {% endfor %}
+        </div>
+    </form>
+    {% for produit in produits %}
+    <a href="{% url 'products:produit_detail' produit.pk %}" class="client-card-mobile">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <span class="badge bg-secondary mb-1" style="font-size:0.65rem;">{{ produit.categorie }}</span>
+                <div class="client-name">{{ produit.nom }}</div>
+                <div class="client-farm">{{ produit.code }} &middot; {{ produit.format_produit }}</div>
+                <div class="client-meta">
+                    {% if produit.prix_unitaire %}<strong>${{ produit.prix_unitaire }}</strong> &middot; {% endif %}
+                    <span class="{% if produit.en_stock %}text-success{% else %}text-danger{% endif %}">{% if produit.en_stock %}En stock{% else %}Rupture{% endif %}</span>
+                </div>
+            </div>
+            <i class="bi bi-chevron-right text-muted" style="margin-top:12px;"></i>
+        </div>
+    </a>
+    {% empty %}
+    <div class="text-center py-5"><i class="bi bi-box-seam" style="font-size:2.5rem;color:#ccc;"></i><p class="text-muted mt-2">Aucun produit trouvé.</p></div>
+    {% endfor %}
+</div>
+
+{# Desktop #}
+<div class="desktop-only">
+    {# Filters #}
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-5">
+                    <input type="text" name="q" class="form-control" placeholder="Rechercher par nom ou code..." value="{{ q }}">
+                </div>
+                <div class="col-md-4">
+                    <select name="categorie" class="form-select">
+                        <option value="">Toutes les catégories</option>
+                        {% for val, label in categories %}
+                        <option value="{{ val }}" {% if categorie_active == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-herbic w-100"><i class="bi bi-filter me-1"></i> Filtrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# Grille produits #}
+    <div class="row g-3">
+        {% for produit in produits %}
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100">
+                {% if produit.image %}
+                <img src="{{ produit.image.url }}" class="card-img-top" style="height:140px;object-fit:cover;border-radius:var(--card-border-radius) var(--card-border-radius) 0 0;">
+                {% else %}
+                <div style="height:60px;background:var(--herbic-green-50);border-radius:var(--card-border-radius) var(--card-border-radius) 0 0;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-box-seam" style="font-size:1.5rem;color:var(--herbic-green-light);"></i>
+                </div>
+                {% endif %}
+                <div class="card-body py-3">
+                    <span class="badge bg-secondary mb-2" style="font-size:0.68rem;">{{ produit.categorie }}</span>
+                    <h6 style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">{{ produit.nom }}</h6>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">{{ produit.code }} &middot; {{ produit.format_produit }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        {% if produit.prix_unitaire %}<span style="font-weight:700;font-size:1.05rem;color:var(--text-primary);">${{ produit.prix_unitaire }}</span>{% else %}<span></span>{% endif %}
+                        <span class="badge {% if produit.en_stock %}bg-livree{% else %}bg-nouvelle{% endif %}">{% if produit.en_stock %}En stock{% else %}Rupture{% endif %}</span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top d-flex gap-2" style="padding:10px 18px;">
+                    <a href="{% url 'products:produit_detail' produit.pk %}" class="btn btn-sm btn-outline-primary flex-fill">Détails</a>
+                    {% if user.is_directeur %}
+                    <a href="{% url 'products:produit_edit' produit.pk %}" class="btn btn-sm btn-outline-primary flex-fill">Modifier</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12"><div class="empty-state"><i class="bi bi-box-seam"></i><p>Aucun produit trouvé.</p></div></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

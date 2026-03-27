@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Mon espace - Herbic CRM{% endblock %}
+{% block sidebar_dashboard %}active{% endblock %}
+{% block topbar_title %}Mon espace{% endblock %}
+{% block content %}
+
+{% if client %}
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-house-door me-2"></i>Ma ferme</div>
+            <div class="card-body">
+                <h5 style="font-weight:700;">{{ client.nom_ferme }}</h5>
+                <p style="color:var(--text-secondary);font-size:0.88rem;">{{ client.adresse }}, {{ client.ville }}, {{ client.code_postal }}</p>
+                {% if client.vendeur %}
+                <div class="d-flex align-items-center gap-2 mt-3 p-2" style="background:var(--herbic-green-50);border-radius:8px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:var(--herbic-green);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;">
+                        {{ client.vendeur.first_name.0|default:"?" }}{{ client.vendeur.last_name.0|default:"" }}
+                    </div>
+                    <div>
+                        <div style="font-weight:600;font-size:0.88rem;">{{ client.vendeur.get_full_name }}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">Mon vendeur</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-flower2 me-2"></i>Mes cultures</div>
+            <div class="card-body">
+                {% for culture in cultures %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:#f1f5f9 !important;">
+                    <div>
+                        <strong>{{ culture.get_type_culture_display }}</strong>
+                        <span style="color:var(--text-muted);font-size:0.85rem;"> - {{ culture.superficie_acres }} acres</span>
+                    </div>
+                    <a href="{% url 'tracking:suivi_list' culture.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-graph-up"></i> Suivi
+                    </a>
+                </div>
+                {% empty %}
+                <div class="empty-state py-3"><i class="bi bi-flower2"></i><p>Aucune culture enregistrée.</p></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-cart3 me-2"></i>Mes commandes</span>
+        <a href="{% url 'orders:commande_client_create' %}" class="btn btn-sm btn-herbic">
+            <i class="bi bi-cart-plus"></i> Passer une commande
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>No</th><th>Date</th><th>Statut</th></tr></thead>
+            <tbody>
+            {% for cmd in commandes %}
+            <tr>
+                <td><a href="{% url 'orders:commande_detail' cmd.pk %}">CMD-{{ cmd.pk|stringformat:"05d" }}</a></td>
+                <td style="color:var(--text-muted);">{{ cmd.date_commande|date:"d/m/Y" }}</td>
+                <td><span class="badge bg-{{ cmd.statut }}">{{ cmd.get_statut_display }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="text-center py-4" style="color:var(--text-muted);">Aucune commande.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="bi bi-info-circle"></i>
+        <p>Aucun profil client associé à votre compte. Contactez votre vendeur.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

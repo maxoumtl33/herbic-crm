@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - Herbic CRM{% endblock %}
+{% block sidebar_clients %}active{% endblock %}
+{% block topbar_title %}{{ title }}{% endblock %}
+{% block nav_clients %}active{% endblock %}
+{% block content %}
+
+{# ======= MOBILE ======= #}
+<div class="mobile-only">
+    <div class="page-title-mobile">
+        <a href="{% if form.instance.pk %}{% url 'clients:client_detail' form.instance.pk %}{% else %}{% url 'clients:client_list' %}{% endif %}" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+        {{ title }}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% for field in form %}
+            {% if field.errors %}
+            <div class="alert alert-danger py-2 mb-2" style="font-size:0.85rem;">{{ field.label }}: {{ field.errors.0 }}</div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="info-section">
+            <div class="info-section-title">Identification</div>
+            <div class="mb-3">
+                <label class="form-label">Code</label>
+                {{ form.code }}
+            </div>
+            <div class="row g-2">
+                <div class="col-6 mb-3">
+                    <label class="form-label">Prénom</label>
+                    {{ form.prenom }}
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label">Nom</label>
+                    {{ form.nom }}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Nom de la ferme</label>
+                {{ form.nom_ferme }}
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-section-title">Adresse</div>
+            <div class="mb-3">
+                <label class="form-label">Adresse</label>
+                {{ form.adresse }}
+            </div>
+            <div class="row g-2">
+                <div class="col-7 mb-3">
+                    <label class="form-label">Ville</label>
+                    {{ form.ville }}
+                </div>
+                <div class="col-5 mb-3">
+                    <label class="form-label">Code postal</label>
+                    {{ form.code_postal }}
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-section-title">Contact</div>
+            <div class="mb-3">
+                <label class="form-label">Téléphone</label>
+                {{ form.telephone }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Cellulaire</label>
+                {{ form.cellulaire }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Courriel</label>
+                {{ form.courriel }}
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="mb-3">
+                <label class="form-label">Vendeur assigné</label>
+                {{ form.vendeur }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                {{ form.notes }}
+            </div>
+        </div>
+
+        {# Espace pour le bouton sticky #}
+        <div style="height:80px;"></div>
+
+        <div class="sticky-submit">
+            <a href="{% if form.instance.pk %}{% url 'clients:client_detail' form.instance.pk %}{% else %}{% url 'clients:client_list' %}{% endif %}" class="btn btn-secondary btn-lg">Annuler</a>
+            <button type="submit" class="btn btn-herbic btn-lg">
+                <i class="bi bi-check-lg"></i> Enregistrer
+            </button>
+        </div>
+    </form>
+</div>
+
+{# ======= DESKTOP ======= #}
+<div class="desktop-only">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2>{{ title }}</h2><hr>
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-4 mb-3"><label class="form-label">Code</label>{{ form.code }}</div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Prénom</label>{{ form.prenom }}</div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Nom</label>{{ form.nom }}</div>
+                        </div>
+                        <div class="mb-3"><label class="form-label">Nom de la ferme</label>{{ form.nom_ferme }}</div>
+                        <div class="mb-3"><label class="form-label">Adresse</label>{{ form.adresse }}</div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3"><label class="form-label">Ville</label>{{ form.ville }}</div>
+                            <div class="col-md-6 mb-3"><label class="form-label">Code postal</label>{{ form.code_postal }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3"><label class="form-label">Téléphone</label>{{ form.telephone }}</div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Cellulaire</label>{{ form.cellulaire }}</div>
+                            <div class="col-md-4 mb-3"><label class="form-label">Courriel</label>{{ form.courriel }}</div>
+                        </div>
+                        <div class="mb-3"><label class="form-label">Vendeur assigné</label>{{ form.vendeur }}</div>
+                        <div class="mb-3"><label class="form-label">Notes</label>{{ form.notes }}</div>
+                        {% for field in form %}{% if field.errors %}<div class="text-danger mb-2">{{ field.label }}: {{ field.errors.0 }}</div>{% endif %}{% endfor %}
+                        <button type="submit" class="btn btn-herbic">Enregistrer</button>
+                        <a href="{% url 'clients:client_list' %}" class="btn btn-secondary">Annuler</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

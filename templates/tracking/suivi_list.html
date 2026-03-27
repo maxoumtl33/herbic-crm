@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Suivi - {{ culture }} - Herbic CRM{% endblock %}
+{% block sidebar_clients %}active{% endblock %}
+{% block topbar_title %}Suivi de pousse{% endblock %}
+{% block nav_clients %}active{% endblock %}
+{% block content %}
+
+{# ======= MOBILE ======= #}
+<div class="mobile-only">
+    <div class="page-title-mobile">
+        <a href="{% url 'clients:client_detail' culture.client.pk %}" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+        <div>
+            Suivi de pousse
+            <div style="font-size:0.75rem;color:#888;font-weight:400;">
+                {{ culture.client.nom_ferme }} &middot; {{ culture.get_type_culture_display }} {{ culture.nom_champ|default:"" }} ({{ culture.annee }})
+            </div>
+        </div>
+    </div>
+
+    {# Stats grille #}
+    {% if stats %}
+    <div class="stat-grid">
+        <div class="stat-box">
+            <div class="stat-box-value">{{ stats.taux_germination|default:"-" }}%</div>
+            <div class="stat-box-label">Germination</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-value">{{ stats.rendement_estime|default:"-" }}</div>
+            <div class="stat-box-label">Rend. estimé</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-value">{{ stats.rendement_reel|default:"-" }}</div>
+            <div class="stat-box-label">Rend. réel</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-value">{{ stats.date_semis|date:"d/m"|default:"-" }}</div>
+            <div class="stat-box-label">Semis</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-value">{{ stats.date_recolte|date:"d/m"|default:"-" }}</div>
+            <div class="stat-box-label">Récolte</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-value">{% if stats.cout_total_intrants %}${{ stats.cout_total_intrants|floatformat:0 }}{% else %}-{% endif %}</div>
+            <div class="stat-box-label">Intrants</div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Actions #}
+    {% if user.is_vendeur or user.is_directeur %}
+    <div class="d-flex gap-2 mb-3">
+        <a href="{% url 'tracking:suivi_create' culture.pk %}" class="btn btn-herbic flex-fill">
+            <i class="bi bi-plus-circle"></i> Observation
+        </a>
+        <a href="{% url 'tracking:stats_edit' culture.pk %}" class="btn btn-outline-primary flex-fill">
+            <i class="bi bi-bar-chart"></i> Stats
+        </a>
+    </div>
+    {% endif %}
+
+    {# Timeline observations #}
+    {% for suivi in suivis %}
+    <div class="info-section" style="border-left:4px solid {% if suivi.etat_general == 'excellent' %}#1b5e20{% elif suivi.etat_general == 'bon' %}#4caf50{% elif suivi.etat_general == 'moyen' %}#ff9800{% elif suivi.etat_general == 'faible' %}#f44336{% else %}#b71c1c{% endif %};">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <strong style="font-size:0.9rem;">{{ suivi.stade_croissance }}</strong>
+                <div style="font-size:0.78rem;color:#888;">{{ suivi.date_observation|date:"d/m/Y" }}</div>
+            </div>
+            <span class="badge bg-{{ suivi.etat_general }}">{{ suivi.get_etat_general_display }}</span>
+        </div>
+
+        <div class="d-flex gap-3 mt-2" style="font-size:0.85rem;">
+            {% if suivi.hauteur_cm %}
+            <span><i class="bi bi-rulers text-muted"></i> {{ suivi.hauteur_cm }} cm</span>
+            {% endif %}
+            {% if suivi.densite_plants %}
+            <span><i class="bi bi-grid-3x3 text-muted"></i> {{ suivi.densite_plants }} pl/ac</span>
+            {% endif %}
+        </div>
+
+        {% if suivi.problemes_observes %}
+        <div class="mt-2 p-2" style="background:#fff3e0;border-radius:8px;font-size:0.85rem;color:#e65100;">
+            <i class="bi bi-exclamation-triangle"></i> {{ suivi.problemes_observes }}
+        </div>
+        {% endif %}
+
+        {% if suivi.notes %}
+        <div style="font-size:0.85rem;color:#666;margin-top:4px;">{{ suivi.notes }}</div>
+        {% endif %}
+
+        {% if suivi.photo %}
+        <img src="{{ suivi.photo.url }}" class="img-fluid rounded mt-2" style="max-height:200px;">
+        {% endif %}
+
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <small style="color:#bbb;">Par {{ suivi.observateur.get_full_name|default:"?" }}</small>
+            {% if user.is_vendeur or user.is_directeur %}
+            <a href="{% url 'tracking:suivi_edit' suivi.pk %}" class="btn btn-sm btn-outline-primary">Modifier</a>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-4">
+        <i class="bi bi-graph-up" style="font-size:2.5rem;color:#ccc;"></i>
+        <p class="text-muted mt-2">Aucune observation.</p>
+        {% if user.is_vendeur or user.is_directeur %}
+        <a href="{% url 'tracking:suivi_create' culture.pk %}" class="btn btn-herbic">
+            <i class="bi bi-plus"></i> Première observation
+        </a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{# ======= DESKTOP ======= #}
+<div class="desktop-only">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2><i class="bi bi-graph-up"></i> Suivi de pousse</h2>
+            <p class="text-muted">{{ culture.client.nom_ferme }} - {{ culture.get_type_culture_display }} {{ culture.nom_champ|default:"" }} ({{ culture.annee }})</p>
+        </div>
+        {% if user.is_vendeur or user.is_directeur %}
+        <div>
+            <a href="{% url 'tracking:suivi_create' culture.pk %}" class="btn btn-herbic me-1"><i class="bi bi-plus"></i> Observation</a>
+            <a href="{% url 'tracking:stats_edit' culture.pk %}" class="btn btn-outline-primary"><i class="bi bi-bar-chart"></i> Statistiques</a>
+        </div>
+        {% endif %}
+    </div>
+    {% if stats %}
+    <div class="row mb-4">
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.taux_germination|default:"-" }}%</h5><small class="text-muted">Germination</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_estime|default:"-" }}</h5><small class="text-muted">Rend. estimé</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_reel|default:"-" }}</h5><small class="text-muted">Rend. réel</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.date_semis|date:"d/m"|default:"-" }}</h5><small class="text-muted">Semis</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.date_recolte|date:"d/m"|default:"-" }}</h5><small class="text-muted">Récolte</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{% if stats.cout_total_intrants %}${{ stats.cout_total_intrants }}{% else %}-{% endif %}</h5><small class="text-muted">Intrants</small></div></div></div>
+    </div>
+    {% endif %}
+    <div class="card">
+        <div class="card-header"><i class="bi bi-eye me-2"></i>Observations</div>
+        <div class="card-body">
+            {% for suivi in suivis %}
+            <div class="card mb-3 border-{{ suivi.etat_general }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>{{ suivi.date_observation|date:"d/m/Y" }} - {{ suivi.stade_croissance }}</h6>
+                            <span class="badge bg-{{ suivi.etat_general }}">{{ suivi.get_etat_general_display }}</span>
+                        </div>
+                        <div>
+                            {% if suivi.hauteur_cm %}<span class="me-3"><strong>Hauteur:</strong> {{ suivi.hauteur_cm }} cm</span>{% endif %}
+                            {% if suivi.densite_plants %}<span><strong>Densité:</strong> {{ suivi.densite_plants }} plants/acre</span>{% endif %}
+                        </div>
+                    </div>
+                    {% if suivi.problemes_observes %}<p class="mt-2 text-danger"><strong>Problèmes:</strong> {{ suivi.problemes_observes }}</p>{% endif %}
+                    {% if suivi.notes %}<p class="mt-1"><em>{{ suivi.notes }}</em></p>{% endif %}
+                    {% if suivi.photo %}<img src="{{ suivi.photo.url }}" class="img-thumbnail mt-2" style="max-height:200px">{% endif %}
+                    <small class="text-muted d-block mt-2">Par {{ suivi.observateur.get_full_name|default:"?" }}</small>
+                    {% if user.is_vendeur or user.is_directeur %}
+                    <a href="{% url 'tracking:suivi_edit' suivi.pk %}" class="btn btn-sm btn-outline-primary mt-1">Modifier</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">Aucune observation enregistrée.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <a href="{% url 'clients:client_detail' culture.client.pk %}" class="btn btn-secondary mt-3">Retour au client</a>
+</div>
+{% endblock %}

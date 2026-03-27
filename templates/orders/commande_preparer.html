@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Préparer CMD-{{ commande.pk|stringformat:"05d" }} - Herbic CRM{% endblock %}
+{% block sidebar_commandes %}active{% endblock %}
+{% block topbar_title %}Préparation CMD-{{ commande.pk|stringformat:"05d" }}{% endblock %}
+{% block content %}
+
+<div class="breadcrumb-subtle">
+    <a href="{% url 'accounts:dashboard' %}">Magasin</a> /
+    Préparation CMD-{{ commande.pk|stringformat:"05d" }}
+</div>
+
+{# En-tête commande #}
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 style="font-weight:700;margin-bottom:4px;">
+                            CMD-{{ commande.pk|stringformat:"05d" }}
+                            <span class="badge bg-{{ commande.statut }} ms-2">{{ commande.get_statut_display }}</span>
+                        </h5>
+                        <div style="font-size:0.9rem;color:var(--text-secondary);">
+                            <i class="bi bi-house-door me-1"></i> <strong>{{ commande.client.nom_ferme }}</strong>
+                            &mdash; {{ commande.client.prenom }} {{ commande.client.nom }}
+                        </div>
+                        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">
+                            Vendeur: {{ commande.vendeur.get_full_name|default:"-" }}
+                            &middot; Commandé le {{ commande.date_commande|date:"d/m/Y à H:i" }}
+                            {% if commande.date_livraison_prevue %}
+                            &middot; <i class="bi bi-truck"></i> Livraison: {{ commande.date_livraison_prevue|date:"d/m/Y" }}
+                            {% endif %}
+                        </div>
+                        {% if commande.notes %}
+                        <div class="mt-2 p-2" style="background:var(--body-bg);border-radius:8px;font-size:0.85rem;">
+                            <i class="bi bi-chat-text me-1"></i> {{ commande.notes }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                {# Progression circulaire #}
+                <div style="position:relative;width:90px;height:90px;margin-bottom:8px;">
+                    <svg viewBox="0 0 36 36" style="width:90px;height:90px;transform:rotate(-90deg);">
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none" stroke="#e2e8f0" stroke-width="3"/>
+                        <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              fill="none"
+                              stroke="{% if commande.tout_prepare %}#22c55e{% else %}#f59e0b{% endif %}"
+                              stroke-width="3"
+                              stroke-dasharray="{{ commande.progression_preparation }}, 100"/>
+                    </svg>
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.2rem;font-weight:800;color:{% if commande.tout_prepare %}#22c55e{% else %}var(--text-primary){% endif %};">
+                        {{ commande.nb_lignes_preparees }}/{{ commande.nb_lignes }}
+                    </div>
+                </div>
+                <div style="font-size:0.82rem;font-weight:600;color:var(--text-muted);">
+                    {% if commande.tout_prepare %}
+                    <i class="bi bi-check-circle-fill text-success"></i> Tout est prêt!
+                    {% else %}
+                    Produits préparés
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Liste des produits à préparer #}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clipboard-check me-2"></i>Produits à préparer</span>
+        <span style="font-size:0.82rem;color:var(--text-muted);">Cliquez sur chaque produit une fois préparé</span>
+    </div>
+    <div class="card-body p-0">
+        {% for ligne in lignes %}
+        <div class="prep-ligne {% if ligne.prepare %}prep-done{% endif %}">
+            <form method="post" action="{% url 'orders:ligne_toggle_prepare' ligne.pk %}" class="d-flex align-items-center w-100">
+                {% csrf_token %}
+                <button type="submit" class="prep-check-btn" title="{% if ligne.prepare %}Marquer non préparé{% else %}Marquer préparé{% endif %}">
+                    {% if ligne.prepare %}
+                    <i class="bi bi-check-circle-fill"></i>
+                    {% else %}
+                    <i class="bi bi-circle"></i>
+                    {% endif %}
+                </button>
+                <div class="flex-fill ms-3" style="min-width:0;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="prep-produit-nom">{{ ligne.produit.nom }}</div>
+                            <div class="prep-produit-detail">
+                                {{ ligne.produit.code }} &middot; {{ ligne.produit.format_produit }}
+                                {% if ligne.produit.categorie %} &middot; {{ ligne.produit.categorie }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end ms-2" style="flex-shrink:0;">
+                            <div class="prep-quantite">x {{ ligne.quantite }}</div>
+                            {% if ligne.prix_unitaire %}
+                            <div style="font-size:0.78rem;color:var(--text-muted);">${{ ligne.prix_unitaire }}/u</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if ligne.prepare %}
+                    <div style="font-size:0.75rem;color:#22c55e;margin-top:2px;">
+                        <i class="bi bi-check"></i> Par {{ ligne.prepare_par.get_full_name|default:"?" }} &middot; {{ ligne.date_preparation|date:"d/m H:i" }}
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{# Actions bas de page #}
+<div class="d-flex justify-content-between mt-4">
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left"></i> Retour au magasin
+    </a>
+    {% if commande.tout_prepare %}
+    <form method="post" action="{% url 'orders:commande_update_statut' commande.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="statut" value="prete">
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="bi bi-check-circle"></i> Confirmer prête
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Magasin - Herbic CRM{% endblock %}
+{% block sidebar_dashboard %}active{% endblock %}
+{% block topbar_title %}Magasin{% endblock %}
+{% block content %}
+
+{# KPIs #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left:4px solid #ef4444;">
+            <div class="stat-card-value" style="color:#ef4444;">{{ commandes_nouvelles.count }}</div>
+            <div class="stat-card-label">À traiter</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left:4px solid #f59e0b;">
+            <div class="stat-card-value" style="color:#f59e0b;">{{ commandes_en_preparation.count }}</div>
+            <div class="stat-card-label">En préparation</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left:4px solid #06b6d4;">
+            <div class="stat-card-value" style="color:#06b6d4;">{{ commandes_pretes.count }}</div>
+            <div class="stat-card-label">Prêtes</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left:4px solid #8b5cf6;">
+            <div class="stat-card-value" style="color:#8b5cf6;">{{ commandes_en_livraison.count }}</div>
+            <div class="stat-card-label">En livraison</div>
+        </div>
+    </div>
+</div>
+
+{# === NOUVELLES COMMANDES === #}
+{% if commandes_nouvelles %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:#fef2f2;color:#991b1b;">
+        <span><i class="bi bi-exclamation-triangle-fill me-2"></i>Nouvelles commandes ({{ commandes_nouvelles.count }})</span>
+    </div>
+    <div class="card-body p-0">
+        {% for cmd in commandes_nouvelles %}
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+            <div>
+                <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong>
+                <span class="ms-2" style="font-weight:600;">{{ cmd.client.nom_ferme }}</span>
+                <div style="font-size:0.8rem;color:var(--text-muted);">
+                    {{ cmd.date_commande|date:"d/m/Y H:i" }}
+                    &middot; Vendeur: {{ cmd.vendeur.get_full_name|default:"-" }}
+                    &middot; {{ cmd.nb_lignes }} produit{{ cmd.nb_lignes|pluralize }}
+                </div>
+            </div>
+            <a href="{% url 'orders:commande_prendre' cmd.pk %}" class="btn btn-sm btn-herbic">
+                <i class="bi bi-play-fill"></i> Prendre en charge
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# === EN PRÉPARATION === #}
+{% if commandes_en_preparation %}
+<div class="card mb-4">
+    <div class="card-header" style="background:#fffbeb;color:#92400e;">
+        <i class="bi bi-gear-fill me-2"></i>En préparation ({{ commandes_en_preparation.count }})
+    </div>
+    <div class="card-body p-0">
+        {% for cmd in commandes_en_preparation %}
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+            <div style="flex:1;min-width:0;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong>
+                    <span style="font-weight:600;">{{ cmd.client.nom_ferme }}</span>
+                </div>
+                {# Barre de progression #}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-fill" style="height:8px;border-radius:4px;">
+                        <div class="progress-bar" role="progressbar"
+                             style="width:{{ cmd.progression_preparation }}%;background:{% if cmd.tout_prepare %}#22c55e{% else %}#f59e0b{% endif %};">
+                        </div>
+                    </div>
+                    <span style="font-size:0.78rem;font-weight:600;color:var(--text-muted);white-space:nowrap;">
+                        {{ cmd.nb_lignes_preparees }}/{{ cmd.nb_lignes }}
+                    </span>
+                </div>
+            </div>
+            <a href="{% url 'orders:commande_preparer' cmd.pk %}" class="btn btn-sm btn-outline-primary ms-3">
+                <i class="bi bi-clipboard-check"></i> Préparer
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# === PRÊTES === #}
+{% if commandes_pretes %}
+<div class="card mb-4">
+    <div class="card-header" style="background:#f0fdf4;color:#166534;">
+        <i class="bi bi-check-circle-fill me-2"></i>Prêtes à livrer ({{ commandes_pretes.count }})
+    </div>
+    <div class="card-body p-0">
+        {% for cmd in commandes_pretes %}
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+            <div>
+                <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong>
+                <span class="ms-2" style="font-weight:600;">{{ cmd.client.nom_ferme }}</span>
+                {% if cmd.date_livraison_prevue %}
+                <span class="ms-2" style="font-size:0.8rem;color:var(--text-muted);">
+                    <i class="bi bi-truck"></i> {{ cmd.date_livraison_prevue|date:"d/m/Y" }}
+                </span>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'orders:commande_preparer' cmd.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> Voir
+                </a>
+                <form method="post" action="{% url 'orders:commande_update_statut' cmd.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="statut" value="en_livraison">
+                    <button type="submit" class="btn btn-sm btn-success">
+                        <i class="bi bi-truck"></i> Envoyer
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# === EN LIVRAISON === #}
+{% if commandes_en_livraison %}
+<div class="card mb-4">
+    <div class="card-header" style="background:#f5f3ff;color:#5b21b6;">
+        <i class="bi bi-truck me-2"></i>En livraison ({{ commandes_en_livraison.count }})
+    </div>
+    <div class="card-body p-0">
+        {% for cmd in commandes_en_livraison %}
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+            <div>
+                <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong>
+                <span class="ms-2" style="font-weight:600;">{{ cmd.client.nom_ferme }}</span>
+            </div>
+            <form method="post" action="{% url 'orders:commande_update_statut' cmd.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="statut" value="livree">
+                <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-check-lg"></i> Confirmer livrée
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{# Vide #}
+{% if not commandes_nouvelles and not commandes_en_preparation and not commandes_pretes and not commandes_en_livraison %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="bi bi-check-circle"></i>
+        <p>Aucune commande en attente. Tout est à jour!</p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

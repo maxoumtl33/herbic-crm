@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block title %}{{ client.nom_ferme }} - Herbic CRM{% endblock %}
+{% block sidebar_clients %}active{% endblock %}
+{% block topbar_title %}{{ client.nom_ferme }}{% endblock %}
+{% block topbar_actions %}
+{% if user.is_directeur %}
+<a href="{% url 'clients:client_edit' client.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-pencil"></i> Modifier</a>
+<a href="{% url 'orders:commande_create' %}?client={{ client.pk }}" class="btn btn-sm btn-success"><i class="bi bi-cart-plus"></i> Commande</a>
+{% endif %}
+{% endblock %}
+{% block nav_clients %}active{% endblock %}
+{% block content %}
+
+{# ======= MOBILE ======= #}
+<div class="mobile-only">
+
+    {# Header #}
+    <div class="page-title-mobile">
+        <a href="{% url 'clients:client_list' %}" class="back-btn"><i class="bi bi-arrow-left"></i></a>
+        <div style="min-width:0;">
+            <div class="text-truncate">{{ client.nom_ferme }}</div>
+            <div style="font-size:0.75rem;color:#888;font-weight:400;">{{ client.prenom }} {{ client.nom }} &middot; {{ client.code }}</div>
+        </div>
+    </div>
+
+    {# Actions rapides - la partie la plus importante sur le terrain #}
+    <div class="quick-actions">
+        {% if client.cellulaire %}
+        <a href="tel:{{ client.cellulaire }}" class="quick-action-btn btn-call">
+            <i class="bi bi-telephone-fill"></i>
+            Appeler
+        </a>
+        {% elif client.telephone %}
+        <a href="tel:{{ client.telephone }}" class="quick-action-btn btn-call">
+            <i class="bi bi-telephone-fill"></i>
+            Appeler
+        </a>
+        {% endif %}
+        <a href="https://maps.google.com/?q={{ client.adresse|urlencode }},+{{ client.ville|urlencode }},+{{ client.code_postal|urlencode }}" class="quick-action-btn btn-gps" target="_blank">
+            <i class="bi bi-geo-alt-fill"></i>
+            GPS
+        </a>
+        <a href="{% url 'orders:commande_create' %}?client={{ client.pk }}" class="quick-action-btn btn-order">
+            <i class="bi bi-cart-plus-fill"></i>
+            Commande
+        </a>
+        <a href="{% url 'clients:client_edit' client.pk %}" class="quick-action-btn btn-edit">
+            <i class="bi bi-pencil-fill"></i>
+            Modifier
+        </a>
+        <a href="{% url 'clients:culture_create' client.pk %}" class="quick-action-btn btn-track">
+            <i class="bi bi-plus-circle-fill"></i>
+            Culture
+        </a>
+    </div>
+
+    {# Infos client #}
+    <div class="info-section">
+        <div class="info-section-title"><i class="bi bi-person-fill"></i> Informations</div>
+        <div class="info-row">
+            <span class="info-label">Adresse</span>
+            <span class="info-value" style="font-size:0.82rem;">{{ client.adresse }}<br>{{ client.ville }}, {{ client.code_postal }}</span>
+        </div>
+        {% if client.cellulaire %}
+        <div class="info-row">
+            <span class="info-label">Cell.</span>
+            <a href="tel:{{ client.cellulaire }}" class="info-value text-primary">{{ client.cellulaire }}</a>
+        </div>
+        {% endif %}
+        {% if client.telephone %}
+        <div class="info-row">
+            <span class="info-label">Tél.</span>
+            <a href="tel:{{ client.telephone }}" class="info-value text-primary">{{ client.telephone }}</a>
+        </div>
+        {% endif %}
+        {% if client.courriel %}
+        <div class="info-row">
+            <span class="info-label">Courriel</span>
+            <a href="mailto:{{ client.courriel }}" class="info-value text-primary" style="font-size:0.82rem;">{{ client.courriel }}</a>
+        </div>
+        {% endif %}
+        {% if client.notes %}
+        <div class="mt-2 p-2" style="background:#f9f9f9;border-radius:8px;font-size:0.85rem;">
+            <i class="bi bi-chat-text text-muted"></i> {{ client.notes }}
+        </div>
+        {% endif %}
+    </div>
+
+    {# Cultures #}
+    {% for culture in cultures %}
+    <div class="culture-card-mobile">
+        <div class="culture-card-header">
+            <span><i class="bi bi-flower2"></i> {{ culture.get_type_culture_display }} - {{ culture.nom_champ|default:"Sans nom" }}</span>
+            <span style="font-size:0.75rem;opacity:0.8;">{{ culture.annee }}</span>
+        </div>
+        <div class="culture-card-body">
+            {# Stats en grille #}
+            <div class="row g-2 mb-2">
+                <div class="col-4 culture-stat">
+                    <div class="culture-stat-value">{{ culture.superficie_acres }}</div>
+                    <div class="culture-stat-label">Acres</div>
+                </div>
+                <div class="col-4 culture-stat">
+                    <div class="culture-stat-value">{{ culture.population_visee|default:"-" }}</div>
+                    <div class="culture-stat-label">Pop. visée</div>
+                </div>
+                <div class="col-4 culture-stat">
+                    <div class="culture-stat-value">{{ culture.population_reelle|default:"-" }}</div>
+                    <div class="culture-stat-label">Pop. réelle</div>
+                </div>
+            </div>
+
+            {% if culture.semence %}
+            <div style="font-size:0.85rem;margin-bottom:8px;">
+                <i class="bi bi-flower3 text-herbic"></i> <strong>Semence:</strong> {{ culture.semence }}
+            </div>
+            {% endif %}
+
+            {# Produits d'arrosage en pills #}
+            {% if culture.produits_arrosage.all %}
+            <div style="font-size:0.78rem;color:#888;margin-bottom:4px;font-weight:600;">ARROSAGE</div>
+            <div>
+                {% for pa in culture.produits_arrosage.all %}
+                <div class="arrosage-pill">
+                    {{ pa.nom_produit }} <span class="dose">{{ pa.dose }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {# Actions culture #}
+            <div class="d-flex gap-2 mt-3">
+                <a href="{% url 'tracking:suivi_list' culture.pk %}" class="btn btn-sm btn-outline-success flex-fill">
+                    <i class="bi bi-graph-up"></i> Suivi
+                </a>
+                <a href="{% url 'clients:culture_edit' culture.pk %}" class="btn btn-sm btn-outline-primary flex-fill">
+                    <i class="bi bi-pencil"></i> Modifier
+                </a>
+                <a href="{% url 'clients:produit_arrosage_create' culture.pk %}" class="btn btn-sm btn-outline-secondary flex-fill">
+                    <i class="bi bi-droplet"></i> Arrosage
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="info-section text-center py-3">
+        <i class="bi bi-flower2" style="font-size:2rem;color:#ccc;"></i>
+        <p class="text-muted mt-1 mb-2">Aucune culture</p>
+        <a href="{% url 'clients:culture_create' client.pk %}" class="btn btn-herbic btn-sm">
+            <i class="bi bi-plus"></i> Ajouter une culture
+        </a>
+    </div>
+    {% endfor %}
+
+    {# Recommandations #}
+    {% if recommandations %}
+    <div class="info-section">
+        <div class="info-section-title"><i class="bi bi-lightbulb-fill"></i> Produits recommandés</div>
+        {% for culture, recos in recommandations.items %}
+        <div style="font-size:0.78rem;color:#888;font-weight:600;margin-bottom:4px;">{{ culture.get_type_culture_display|upper }}</div>
+        {% for reco in recos %}
+        <div class="reco-card">
+            <div class="reco-name">{{ reco.produit.nom }}</div>
+            <div class="reco-detail">{{ reco.produit.format_produit }}{% if reco.description %} &middot; {{ reco.description }}{% endif %}</div>
+        </div>
+        {% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {# Commandes #}
+    {% if commandes %}
+    <div class="info-section">
+        <div class="info-section-title"><i class="bi bi-cart-fill"></i> Commandes</div>
+        {% for cmd in commandes %}
+        <a href="{% url 'orders:commande_detail' cmd.pk %}" class="d-flex justify-content-between align-items-center py-2 text-decoration-none" style="border-bottom:1px solid #f0f0f0;">
+            <div>
+                <strong style="color:#333;">CMD-{{ cmd.pk|stringformat:"05d" }}</strong>
+                <div style="font-size:0.8rem;color:#999;">{{ cmd.date_commande|date:"d/m/Y" }}</div>
+            </div>
+            <span class="badge bg-{{ cmd.statut }}">{{ cmd.get_statut_display }}</span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+</div>
+
+{# ======= DESKTOP ======= #}
+<div class="desktop-only">
+    <div class="breadcrumb-subtle">
+        <a href="{% url 'clients:client_list' %}">Clients</a> / {{ client.nom_ferme }}
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-person me-2"></i>Informations client</div>
+                <div class="card-body">
+                    <div class="culture-detail-item"><span class="culture-detail-label">Code</span><span class="culture-detail-value">{{ client.code }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Nom</span><span class="culture-detail-value">{{ client.prenom }} {{ client.nom }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Ferme</span><span class="culture-detail-value">{{ client.nom_ferme }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Adresse</span><span class="culture-detail-value" style="text-align:right;max-width:60%;">{{ client.adresse }}, {{ client.ville }}, {{ client.code_postal }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Téléphone</span><span class="culture-detail-value">{{ client.telephone|default:"-" }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Cellulaire</span><span class="culture-detail-value">{{ client.cellulaire|default:"-" }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Courriel</span><span class="culture-detail-value">{{ client.courriel|default:"-" }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Vendeur</span><span class="culture-detail-value">{{ client.vendeur.get_full_name|default:"Non assigné" }}</span></div>
+                    {% if client.notes %}
+                    <div class="mt-3 p-3" style="background:var(--body-bg);border-radius:8px;font-size:0.88rem;color:var(--text-secondary);">
+                        <i class="bi bi-chat-text me-1"></i> {{ client.notes }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-cart3 me-2"></i>Commandes</span>
+                    {% if user.is_vendeur or user.is_directeur %}
+                    <a href="{% url 'orders:commande_create' %}?client={{ client.pk }}" class="btn btn-sm btn-success"><i class="bi bi-cart-plus"></i> Nouvelle</a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>No</th><th>Date</th><th>Statut</th></tr></thead>
+                        <tbody>
+                        {% for cmd in commandes %}
+                        <tr>
+                            <td><a href="{% url 'orders:commande_detail' cmd.pk %}">CMD-{{ cmd.pk|stringformat:"05d" }}</a></td>
+                            <td style="color:var(--text-muted);">{{ cmd.date_commande|date:"d/m/Y" }}</td>
+                            <td><span class="badge bg-{{ cmd.statut }}">{{ cmd.get_statut_display }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-center py-3" style="color:var(--text-muted);">Aucune commande.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Cultures #}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 style="font-weight:700;margin:0;"><i class="bi bi-flower2 me-2 text-herbic"></i>Cultures</h5>
+        {% if user.is_vendeur or user.is_directeur %}
+        <a href="{% url 'clients:culture_create' client.pk %}" class="btn btn-sm btn-herbic"><i class="bi bi-plus-lg"></i> Ajouter une culture</a>
+        {% endif %}
+    </div>
+
+    {% for culture in cultures %}
+    <div class="culture-card-desktop">
+        <div class="culture-header">
+            <h6><i class="bi bi-flower3 me-1"></i> {{ culture.get_type_culture_display }} - {{ culture.nom_champ|default:"Sans nom" }} ({{ culture.annee }})</h6>
+            <div class="d-flex gap-2">
+                <a href="{% url 'tracking:suivi_list' culture.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-graph-up me-1"></i>Suivi</a>
+                {% if user.is_vendeur or user.is_directeur %}
+                <a href="{% url 'clients:culture_edit' culture.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                <a href="{% url 'clients:produit_arrosage_create' culture.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-droplet me-1"></i>Arrosage</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="culture-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="culture-detail-item"><span class="culture-detail-label">Superficie</span><span class="culture-detail-value">{{ culture.superficie_acres }} acres</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Semence</span><span class="culture-detail-value">{{ culture.semence|default:"-" }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Population visée</span><span class="culture-detail-value">{{ culture.population_visee|default:"-" }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Population réelle</span><span class="culture-detail-value">{{ culture.population_reelle|default:"-" }}</span></div>
+                </div>
+                <div class="col-md-7">
+                    {% if culture.produits_arrosage.all %}
+                    <h6 style="font-weight:700;font-size:0.82rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Produits d'arrosage</h6>
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Produit</th><th>Dose/acre</th><th>Qté totale</th><th>Date</th></tr></thead>
+                        <tbody>
+                        {% for pa in culture.produits_arrosage.all %}
+                        <tr>
+                            <td style="font-weight:600;">{{ pa.nom_produit }}</td>
+                            <td>{{ pa.dose }}</td>
+                            <td>{{ pa.quantite_totale }} {{ pa.unite }}</td>
+                            <td style="color:var(--text-muted);">{{ pa.date_application|date:"d/m/Y"|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p style="color:var(--text-muted);font-size:0.88rem;">Aucun produit d'arrosage.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state"><i class="bi bi-flower2"></i><p>Aucune culture enregistrée.</p></div>
+    {% endfor %}
+
+    {# Recommandations #}
+    {% if recommandations %}
+    <div class="card mt-4">
+        <div class="card-header" style="background:var(--herbic-green-50);color:var(--herbic-green-dark);">
+            <i class="bi bi-lightbulb-fill me-2"></i>Produits recommandés
+        </div>
+        <div class="card-body">
+            {% for culture, recos in recommandations.items %}
+            <h6 style="font-weight:700;font-size:0.85rem;color:var(--text-secondary);margin-top:{% if not forloop.first %}16px{% else %}0{% endif %};">{{ culture.get_type_culture_display }} ({{ culture.annee }})</h6>
+            <div class="row g-2 mb-2">
+                {% for reco in recos %}
+                <div class="col-xl-3 col-md-4">
+                    <div class="reco-card-desktop">
+                        <strong>{{ reco.produit.nom }}</strong><br>
+                        <small style="color:var(--text-muted);">{{ reco.produit.format_produit }}</small>
+                        {% if reco.description %}<br><small style="color:var(--text-secondary);">{{ reco.description }}</small>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

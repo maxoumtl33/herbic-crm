@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - Herbic CRM{% endblock %}
+{% block sidebar_produits %}active{% endblock %}
+{% block topbar_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb-subtle">
+    <a href="{% url 'products:produit_list' %}">Produits</a> / <a href="{% url 'products:categorie_list' %}">Catégories</a> / {{ title }}
+</div>
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-tag me-2"></i>{{ title }}</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<div class="text-danger mt-1" style="font-size:0.82rem;">{{ field.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-herbic"><i class="bi bi-check-lg me-1"></i> Enregistrer</button>
+                        <a href="{% url 'products:categorie_list' %}" class="btn btn-outline-primary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

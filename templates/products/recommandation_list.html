@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Recommandations - Herbic CRM{% endblock %}
+{% block sidebar_produits %}active{% endblock %}
+{% block topbar_title %}Recommandations produits{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'products:recommandation_create' %}" class="btn btn-sm btn-herbic"><i class="bi bi-plus-lg"></i> Nouvelle recommandation</a>
+{% endblock %}
+{% block content %}
+<div class="breadcrumb-subtle">
+    <a href="{% url 'products:produit_list' %}">Produits</a> / Recommandations
+</div>
+
+{# Filtres par culture #}
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="{% url 'products:recommandation_list' %}" class="btn btn-sm {% if not culture_active %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">Toutes</a>
+    {% for val, label in types_culture %}
+    <a href="?culture={{ val }}" class="btn btn-sm {% if culture_active == val %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">{{ label }}</a>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Produit</th><th>Catégorie</th><th>Culture</th><th>Priorité</th><th>Description</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for reco in recommandations %}
+            <tr>
+                <td>
+                    <a href="{% url 'products:produit_detail' reco.produit.pk %}" style="font-weight:600;">{{ reco.produit.nom }}</a>
+                    <div style="font-size:0.78rem;color:var(--text-muted);">{{ reco.produit.code }}</div>
+                </td>
+                <td><span class="badge bg-secondary">{{ reco.produit.categorie }}</span></td>
+                <td>
+                    <span class="badge" style="background:var(--herbic-green-50);color:var(--herbic-green-dark);">
+                        {{ reco.get_type_culture_display|default:reco.type_culture }}
+                    </span>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        {% for i in "12345678910" %}
+                            {% if forloop.counter <= reco.priorite %}
+                            <i class="bi bi-star-fill" style="color:#f59e0b;font-size:0.65rem;"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span style="font-size:0.78rem;color:var(--text-muted);margin-left:4px;">{{ reco.priorite }}</span>
+                    </div>
+                </td>
+                <td style="color:var(--text-secondary);font-size:0.85rem;max-width:250px;">{{ reco.description|truncatewords:12|default:"-" }}</td>
+                <td>
+                    <div class="d-flex gap-1 justify-content-end">
+                        <a href="{% url 'products:recommandation_edit' reco.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{% url 'products:recommandation_delete' reco.pk %}" class="d-inline" onsubmit="return confirm('Supprimer cette recommandation?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted);">Aucune recommandation.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -36,6 +36,13 @@
                 <i class="bi bi-cart3"></i> Commandes
             </a>
             {% if user.is_directeur %}
+            <div class="sidebar-section">Gestion produits</div>
+            <a href="{% url 'products:categorie_list' %}" class="sidebar-link {% block sidebar_categories %}{% endblock %}">
+                <i class="bi bi-tags-fill"></i> Catégories
+            </a>
+            <a href="{% url 'products:recommandation_list' %}" class="sidebar-link {% block sidebar_recommandations %}{% endblock %}">
+                <i class="bi bi-lightbulb-fill"></i> Recommandations
+            </a>
             <div class="sidebar-section">Administration</div>
             <a href="{% url 'accounts:user_list' %}" class="sidebar-link {% block sidebar_users %}{% endblock %}">
                 <i class="bi bi-person-gear"></i> Utilisateurs

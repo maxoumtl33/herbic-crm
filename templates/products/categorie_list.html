@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Catégories - Herbic CRM{% endblock %}
+{% block sidebar_produits %}active{% endblock %}
+{% block topbar_title %}Catégories de produits{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'products:categorie_create' %}" class="btn btn-sm btn-herbic"><i class="bi bi-plus-lg"></i> Nouvelle catégorie</a>
+{% endblock %}
+{% block content %}
+<div class="breadcrumb-subtle">
+    <a href="{% url 'products:produit_list' %}">Produits</a> / Catégories
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Nom</th><th>Type</th><th>Nb produits</th><th>Description</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td style="font-weight:600;">{{ cat.nom }}</td>
+                <td><span class="badge bg-secondary">{{ cat.get_type_categorie_display }}</span></td>
+                <td>{{ cat.nb_produits }}</td>
+                <td style="color:var(--text-muted);font-size:0.85rem;">{{ cat.description|truncatewords:10|default:"-" }}</td>
+                <td>
+                    <div class="d-flex gap-1 justify-content-end">
+                        <a href="{% url 'products:categorie_edit' cat.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        {% if cat.nb_produits == 0 %}
+                        <form method="post" action="{% url 'products:categorie_delete' cat.pk %}" class="d-inline" onsubmit="return confirm('Supprimer cette catégorie?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center py-4" style="color:var(--text-muted);">Aucune catégorie.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

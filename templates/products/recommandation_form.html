@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - Herbic CRM{% endblock %}
+{% block sidebar_produits %}active{% endblock %}
+{% block topbar_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="breadcrumb-subtle">
+    <a href="{% url 'products:produit_list' %}">Produits</a> / <a href="{% url 'products:recommandation_list' %}">Recommandations</a> / {{ title }}
+</div>
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-lightbulb me-2"></i>{{ title }}</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Produit</label>
+                        {{ form.produit }}
+                        {% if form.produit.errors %}<div class="text-danger mt-1" style="font-size:0.82rem;">{{ form.produit.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Type de culture</label>
+                            {{ form.type_culture }}
+                            {% if form.type_culture.errors %}<div class="text-danger mt-1" style="font-size:0.82rem;">{{ form.type_culture.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Priorité (1-10, plus haut = recommandé en premier)</label>
+                            {{ form.priorite }}
+                            {% if form.priorite.errors %}<div class="text-danger mt-1" style="font-size:0.82rem;">{{ form.priorite.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pourquoi recommander ce produit?</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<div class="text-danger mt-1" style="font-size:0.82rem;">{{ form.description.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-herbic"><i class="bi bi-check-lg me-1"></i> Enregistrer</button>
+                        <a href="{% url 'products:recommandation_list' %}" class="btn btn-outline-primary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

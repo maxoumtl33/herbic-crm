@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load prix_filters %}
 {% block title %}Produits - Herbic CRM{% endblock %}
 {% block sidebar_produits %}active{% endblock %}
 {% block topbar_title %}Catalogue produits{% endblock %}
@@ -33,7 +34,7 @@
                 <div class="client-name">{{ produit.nom }}</div>
                 <div class="client-farm">{{ produit.code }} &middot; {{ produit.format_produit }}</div>
                 <div class="client-meta">
-                    {% if produit.prix_unitaire %}<strong>${{ produit.prix_unitaire }}</strong> &middot; {% endif %}
+                    {% if produit.prix_unitaire %}<strong>{{ produit.prix_unitaire|prix }}</strong> &middot; {% endif %}
                     <span class="{% if produit.en_stock %}text-success{% else %}text-danger{% endif %}">{% if produit.en_stock %}En stock{% else %}Rupture{% endif %}</span>
                 </div>
             </div>
@@ -86,7 +87,7 @@
                     <h6 style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">{{ produit.nom }}</h6>
                     <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">{{ produit.code }} &middot; {{ produit.format_produit }}</div>
                     <div class="d-flex justify-content-between align-items-center">
-                        {% if produit.prix_unitaire %}<span style="font-weight:700;font-size:1.05rem;color:var(--text-primary);">${{ produit.prix_unitaire }}</span>{% else %}<span></span>{% endif %}
+                        {% if produit.prix_unitaire %}<span style="font-weight:700;font-size:1.05rem;color:var(--text-primary);">{{ produit.prix_unitaire|prix }}</span>{% else %}<span></span>{% endif %}
                         <span class="badge {% if produit.en_stock %}bg-livree{% else %}bg-nouvelle{% endif %}">{% if produit.en_stock %}En stock{% else %}Rupture{% endif %}</span>
                     </div>
                 </div>

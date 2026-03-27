@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load prix_filters %}
 {% block title %}{{ produit.nom }} - Herbic CRM{% endblock %}
 {% block sidebar_produits %}active{% endblock %}
 {% block topbar_title %}Détail produit{% endblock %}
@@ -23,7 +24,7 @@
                     </div>
                     <div class="col-md-6">
                         {% if produit.prix_unitaire %}
-                        <div class="culture-detail-item"><span class="culture-detail-label">Prix unitaire</span><span class="culture-detail-value" style="font-size:1.1rem;color:var(--herbic-green);">${{ produit.prix_unitaire }}</span></div>
+                        <div class="culture-detail-item"><span class="culture-detail-label">Prix unitaire</span><span class="culture-detail-value" style="font-size:1.1rem;color:var(--herbic-green);">{{ produit.prix_unitaire|prix }}</span></div>
                         {% endif %}
                         {% if produit.culture_recommandee %}
                         <div class="culture-detail-item"><span class="culture-detail-label">Cultures</span><span class="culture-detail-value">{{ produit.culture_recommandee }}</span></div>

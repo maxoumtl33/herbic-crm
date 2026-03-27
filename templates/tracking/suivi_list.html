@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load prix_filters %}
 {% block title %}Suivi - {{ culture }} - Herbic CRM{% endblock %}
 {% block sidebar_clients %}active{% endblock %}
 {% block topbar_title %}Suivi de pousse{% endblock %}
@@ -41,7 +42,7 @@
             <div class="stat-box-label">Récolte</div>
         </div>
         <div class="stat-box">
-            <div class="stat-box-value">{% if stats.cout_total_intrants %}${{ stats.cout_total_intrants|floatformat:0 }}{% else %}-{% endif %}</div>
+            <div class="stat-box-value">{% if stats.cout_total_intrants %}{{ stats.cout_total_intrants|prix }}{% else %}-{% endif %}</div>
             <div class="stat-box-label">Intrants</div>
         </div>
     </div>
@@ -134,7 +135,7 @@
         <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_reel|default:"-" }}</h5><small class="text-muted">Rend. réel</small></div></div></div>
         <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.date_semis|date:"d/m"|default:"-" }}</h5><small class="text-muted">Semis</small></div></div></div>
         <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.date_recolte|date:"d/m"|default:"-" }}</h5><small class="text-muted">Récolte</small></div></div></div>
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{% if stats.cout_total_intrants %}${{ stats.cout_total_intrants }}{% else %}-{% endif %}</h5><small class="text-muted">Intrants</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{% if stats.cout_total_intrants %}{{ stats.cout_total_intrants|prix }}{% else %}-{% endif %}</h5><small class="text-muted">Intrants</small></div></div></div>
     </div>
     {% endif %}
     <div class="card">

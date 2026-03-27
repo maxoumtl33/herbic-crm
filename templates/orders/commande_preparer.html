@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load prix_filters %}
 {% block title %}Préparer CMD-{{ commande.pk|stringformat:"05d" }} - Herbic CRM{% endblock %}
 {% block sidebar_commandes %}active{% endblock %}
 {% block topbar_title %}Préparation CMD-{{ commande.pk|stringformat:"05d" }}{% endblock %}
@@ -101,7 +102,7 @@
                         <div class="text-end ms-2" style="flex-shrink:0;">
                             <div class="prep-quantite">x {{ ligne.quantite }}</div>
                             {% if ligne.prix_unitaire %}
-                            <div style="font-size:0.78rem;color:var(--text-muted);">${{ ligne.prix_unitaire }}/u</div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);">{{ ligne.prix_unitaire|prix }}/u</div>
                             {% endif %}
                         </div>
                     </div>

@@ -6,17 +6,30 @@
 <a href="{% url 'accounts:user_create' %}" class="btn btn-sm btn-herbic"><i class="bi bi-person-plus"></i> Nouvel utilisateur</a>
 {% endblock %}
 {% block content %}
+
+{# Onglets par rôle #}
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="{% url 'accounts:user_list' %}" class="btn btn-sm {% if not role_filter %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">
+        Tous
+    </a>
+    {% for val, label in roles %}
+    <a href="?role={{ val }}" class="btn btn-sm {% if role_filter == val %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">
+        {{ label }}s
+    </a>
+    {% endfor %}
+</div>
+
 <div class="card">
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
             <thead>
-                <tr><th>Utilisateur</th><th>Nom complet</th><th>Courriel</th><th>Rôle</th><th>Statut</th></tr>
+                <tr><th>Utilisateur</th><th>Nom complet</th><th>Courriel</th><th>Rôle</th><th>Statut</th><th></th></tr>
             </thead>
             <tbody>
             {% for u in users %}
-            <tr>
+            <tr {% if not u.is_active %}style="opacity:0.5;"{% endif %}>
                 <td style="font-weight:600;">{{ u.username }}</td>
-                <td>{{ u.get_full_name }}</td>
+                <td>{{ u.get_full_name|default:"-" }}</td>
                 <td style="color:var(--text-muted);">{{ u.email|default:"-" }}</td>
                 <td><span class="badge bg-{{ u.role }}">{{ u.get_role_display }}</span></td>
                 <td>
@@ -26,7 +39,31 @@
                     <span style="color:#ef4444;"><i class="bi bi-x-circle-fill"></i> Inactif</span>
                     {% endif %}
                 </td>
+                <td>
+                    <div class="d-flex gap-1 justify-content-end">
+                        <a href="{% url 'accounts:user_edit' u.pk %}" class="btn btn-sm btn-outline-primary" title="Modifier">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% if u != request.user %}
+                        <form method="post" action="{% url 'accounts:user_toggle_active' u.pk %}" class="d-inline"
+                              onsubmit="return confirm('{% if u.is_active %}Désactiver{% else %}Réactiver{% endif %} {{ u.get_full_name|default:u.username }}?')">
+                            {% csrf_token %}
+                            {% if u.is_active %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Désactiver">
+                                <i class="bi bi-person-slash"></i>
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-sm btn-outline-success" title="Réactiver">
+                                <i class="bi bi-person-check"></i>
+                            </button>
+                            {% endif %}
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
             </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted);">Aucun utilisateur trouvé.</td></tr>
             {% endfor %}
             </tbody>
         </table>

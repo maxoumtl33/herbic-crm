@@ -23,6 +23,18 @@ class UserCreateForm(UserCreationForm):
             field.widget.attrs['class'] = 'form-control'
 
 
+class UserEditForm(forms.ModelForm):
+    """Formulaire d'édition par le directeur (sans mot de passe obligatoire)."""
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'role', 'telephone', 'cellulaire']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User

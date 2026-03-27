@@ -1,8 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .forms import LoginForm, UserCreateForm, UserUpdateForm
+from .forms import LoginForm, UserCreateForm, UserEditForm, UserUpdateForm
 from .decorators import directeur_required
 from .models import User
 
@@ -96,8 +96,15 @@ def profile(request):
 
 @directeur_required
 def user_list(request):
+    role_filter = request.GET.get('role', '')
     users = User.objects.all().order_by('role', 'last_name')
-    return render(request, 'accounts/user_list.html', {'users': users})
+    if role_filter:
+        users = users.filter(role=role_filter)
+    return render(request, 'accounts/user_list.html', {
+        'users': users,
+        'role_filter': role_filter,
+        'roles': User.Role.choices,
+    })
 
 
 @directeur_required
@@ -111,3 +118,31 @@ def user_create(request):
     else:
         form = UserCreateForm()
     return render(request, 'accounts/user_form.html', {'form': form, 'title': 'Nouvel utilisateur'})
+
+
+@directeur_required
+def user_edit(request, pk):
+    user_obj = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        form = UserEditForm(request.POST, instance=user_obj)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Utilisateur "{user_obj.username}" mis à jour.')
+            return redirect('accounts:user_list')
+    else:
+        form = UserEditForm(instance=user_obj)
+    return render(request, 'accounts/user_form.html', {'form': form, 'title': f'Modifier {user_obj.get_full_name() or user_obj.username}'})
+
+
+@directeur_required
+def user_toggle_active(request, pk):
+    user_obj = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        if user_obj == request.user:
+            messages.error(request, 'Vous ne pouvez pas vous désactiver vous-même.')
+        else:
+            user_obj.is_active = not user_obj.is_active
+            user_obj.save()
+            etat = 'activé' if user_obj.is_active else 'désactivé'
+            messages.success(request, f'{user_obj.get_full_name() or user_obj.username} {etat}.')
+    return redirect('accounts:user_list')

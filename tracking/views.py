@@ -1,9 +1,11 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from clients.models import Culture
 from .models import SuiviPousse, StatistiqueCulture
 from .forms import SuiviPousseForm, StatistiqueCultureForm
+from .stats_engine import calculer_stats_auto, mettre_a_jour_stats
 from accounts.decorators import vendeur_or_directeur
 
 
@@ -11,11 +13,19 @@ from accounts.decorators import vendeur_or_directeur
 def suivi_list(request, culture_pk):
     culture = get_object_or_404(Culture, pk=culture_pk)
     suivis = culture.suivis_pousse.all()
-    stats = getattr(culture, 'statistiques', None)
+
+    # Calcul automatique des stats
+    stats_obj, stats_auto = mettre_a_jour_stats(culture)
+
     return render(request, 'tracking/suivi_list.html', {
         'culture': culture,
         'suivis': suivis,
-        'stats': stats,
+        'stats': stats_obj,
+        'stats_auto': stats_auto,
+        'chart_dates': json.dumps(stats_auto.get('graphique_dates', [])),
+        'chart_hauteurs': json.dumps(stats_auto.get('graphique_hauteurs', [])),
+        'chart_densites': json.dumps(stats_auto.get('graphique_densites', [])),
+        'chart_stades': json.dumps(stats_auto.get('graphique_stades', [])),
     })
 
 
@@ -29,6 +39,8 @@ def suivi_create(request, culture_pk):
             suivi.culture = culture
             suivi.observateur = request.user
             suivi.save()
+            # Recalcul auto des stats
+            mettre_a_jour_stats(culture)
             messages.success(request, 'Observation ajoutée.')
             return redirect('tracking:suivi_list', culture_pk=culture.pk)
     else:
@@ -45,6 +57,7 @@ def suivi_edit(request, pk):
         form = SuiviPousseForm(request.POST, request.FILES, instance=suivi)
         if form.is_valid():
             form.save()
+            mettre_a_jour_stats(suivi.culture)
             messages.success(request, 'Observation mise à jour.')
             return redirect('tracking:suivi_list', culture_pk=suivi.culture.pk)
     else:

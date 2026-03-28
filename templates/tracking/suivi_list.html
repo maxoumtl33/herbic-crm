@@ -48,6 +48,14 @@
     </div>
     {% endif %}
 
+    {# Graphique mobile #}
+    {% if stats_auto.graphique_dates %}
+    <div class="info-section">
+        <div class="info-section-title"><i class="bi bi-graph-up"></i> Évolution</div>
+        <canvas id="chart-mobile" height="200"></canvas>
+    </div>
+    {% endif %}
+
     {# Actions #}
     {% if user.is_vendeur or user.is_directeur %}
     <div class="d-flex gap-2 mb-3">
@@ -60,7 +68,24 @@
     </div>
     {% endif %}
 
+    {# Problèmes récents #}
+    {% if stats_auto.problemes_recents %}
+    <div class="info-section" style="border-left:3px solid #ef4444;">
+        <div style="font-weight:700;font-size:0.82rem;color:#ef4444;margin-bottom:6px;"><i class="bi bi-exclamation-triangle-fill"></i> Problèmes récents</div>
+        {% for p in stats_auto.problemes_recents %}
+        <div style="font-size:0.85rem;color:#991b1b;padding:3px 0;">{{ p }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {# Timeline observations #}
+    {% if stats_auto.nb_observations %}
+    <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">
+        {{ stats_auto.nb_observations }} observation{{ stats_auto.nb_observations|pluralize }}
+        {% if stats_auto.dernier_stade %} &middot; Dernier stade: <strong>{{ stats_auto.dernier_stade }}</strong>{% endif %}
+    </div>
+    {% endif %}
+
     {% for suivi in suivis %}
     <div class="info-section" style="border-left:4px solid {% if suivi.etat_general == 'excellent' %}#1b5e20{% elif suivi.etat_general == 'bon' %}#4caf50{% elif suivi.etat_general == 'moyen' %}#ff9800{% elif suivi.etat_general == 'faible' %}#f44336{% else %}#b71c1c{% endif %};">
         <div class="d-flex justify-content-between align-items-start">
@@ -70,30 +95,17 @@
             </div>
             <span class="badge bg-{{ suivi.etat_general }}">{{ suivi.get_etat_general_display }}</span>
         </div>
-
         <div class="d-flex gap-3 mt-2" style="font-size:0.85rem;">
-            {% if suivi.hauteur_cm %}
-            <span><i class="bi bi-rulers text-muted"></i> {{ suivi.hauteur_cm|nombre }} cm</span>
-            {% endif %}
-            {% if suivi.densite_plants %}
-            <span><i class="bi bi-grid-3x3 text-muted"></i> {{ suivi.densite_plants|nombre }} pl/ac</span>
-            {% endif %}
+            {% if suivi.hauteur_cm %}<span><i class="bi bi-rulers text-muted"></i> {{ suivi.hauteur_cm|nombre }} cm</span>{% endif %}
+            {% if suivi.densite_plants %}<span><i class="bi bi-grid-3x3 text-muted"></i> {{ suivi.densite_plants|nombre }} pl/ac</span>{% endif %}
         </div>
-
         {% if suivi.problemes_observes %}
         <div class="mt-2 p-2" style="background:#fff3e0;border-radius:8px;font-size:0.85rem;color:#e65100;">
             <i class="bi bi-exclamation-triangle"></i> {{ suivi.problemes_observes }}
         </div>
         {% endif %}
-
-        {% if suivi.notes %}
-        <div style="font-size:0.85rem;color:#666;margin-top:4px;">{{ suivi.notes }}</div>
-        {% endif %}
-
-        {% if suivi.photo %}
-        <img src="{{ suivi.photo.url }}" class="img-fluid rounded mt-2" style="max-height:200px;">
-        {% endif %}
-
+        {% if suivi.notes %}<div style="font-size:0.85rem;color:#666;margin-top:4px;">{{ suivi.notes }}</div>{% endif %}
+        {% if suivi.photo %}<img src="{{ suivi.photo.url }}" class="img-fluid rounded mt-2" style="max-height:200px;">{% endif %}
         <div class="d-flex justify-content-between align-items-center mt-2">
             <small style="color:#bbb;">Par {{ suivi.observateur.get_full_name|default:"?" }}</small>
             {% if user.is_vendeur or user.is_directeur %}
@@ -106,9 +118,7 @@
         <i class="bi bi-graph-up" style="font-size:2.5rem;color:#ccc;"></i>
         <p class="text-muted mt-2">Aucune observation.</p>
         {% if user.is_vendeur or user.is_directeur %}
-        <a href="{% url 'tracking:suivi_create' culture.pk %}" class="btn btn-herbic">
-            <i class="bi bi-plus"></i> Première observation
-        </a>
+        <a href="{% url 'tracking:suivi_create' culture.pk %}" class="btn btn-herbic"><i class="bi bi-plus"></i> Première observation</a>
         {% endif %}
     </div>
     {% endfor %}
@@ -116,58 +126,254 @@
 
 {# ======= DESKTOP ======= #}
 <div class="desktop-only">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="breadcrumb-subtle">
+        <a href="{% url 'clients:client_detail' culture.client.pk %}">{{ culture.client.nom_ferme }}</a> / Suivi {{ culture.get_type_culture_display }} {{ culture.nom_champ|default:"" }}
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2><i class="bi bi-graph-up"></i> Suivi de pousse</h2>
-            <p class="text-muted">{{ culture.client.nom_ferme }} - {{ culture.get_type_culture_display }} {{ culture.nom_champ|default:"" }} ({{ culture.annee }})</p>
+            <h4 style="font-weight:700;margin:0;">{{ culture.get_type_culture_display }} - {{ culture.nom_champ|default:"Sans nom" }}</h4>
+            <span style="color:var(--text-muted);">{{ culture.superficie_acres|nombre }} acres &middot; {{ culture.annee }}{% if culture.semence %} &middot; {{ culture.semence }}{% endif %}</span>
         </div>
         {% if user.is_vendeur or user.is_directeur %}
         <div>
             <a href="{% url 'tracking:suivi_create' culture.pk %}" class="btn btn-herbic me-1"><i class="bi bi-plus"></i> Observation</a>
-            <a href="{% url 'tracking:stats_edit' culture.pk %}" class="btn btn-outline-primary"><i class="bi bi-bar-chart"></i> Statistiques</a>
+            <a href="{% url 'tracking:stats_edit' culture.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Modifier stats</a>
         </div>
         {% endif %}
     </div>
+
+    {# Stats cards enrichies #}
     {% if stats %}
-    <div class="row mb-4">
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.taux_germination|default:"-"|nombre }}%</h5><small class="text-muted">Germination</small></div></div></div>
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_estime|default:"-"|nombre }}</h5><small class="text-muted">Rend. estimé</small></div></div></div>
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_reel|default:"-"|nombre }}</h5><small class="text-muted">Rend. réel</small></div></div></div>
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.date_semis|date:"d/m"|default:"-" }}</h5><small class="text-muted">Semis</small></div></div></div>
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.date_recolte|date:"d/m"|default:"-" }}</h5><small class="text-muted">Récolte</small></div></div></div>
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{% if stats.cout_total_intrants %}{{ stats.cout_total_intrants|prix }}{% else %}-{% endif %}</h5><small class="text-muted">Intrants</small></div></div></div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="stat-card" style="border-left:3px solid {% if stats.taux_germination and stats.taux_germination >= 95 %}#22c55e{% elif stats.taux_germination and stats.taux_germination >= 85 %}#f59e0b{% elif stats.taux_germination %}#ef4444{% else %}var(--border-color){% endif %};">
+                <div class="stat-card-value">{{ stats.taux_germination|default:"-"|nombre }}%</div>
+                <div class="stat-card-label">Germination</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-card-value">{{ stats.rendement_estime|default:"-"|nombre }}</div>
+                <div class="stat-card-label">Rend. estimé</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card" style="border-left:3px solid {% if stats.rendement_reel %}#22c55e{% else %}var(--border-color){% endif %};">
+                <div class="stat-card-value">{{ stats.rendement_reel|default:"-"|nombre }}</div>
+                <div class="stat-card-label">Rend. réel</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-card-value">{{ stats.date_semis|date:"d/m"|default:"-" }}</div>
+                <div class="stat-card-label">Semis</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-card-value">{{ stats.date_recolte|date:"d/m"|default:"-" }}</div>
+                <div class="stat-card-label">Récolte</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card">
+                <div class="stat-card-value">{% if stats.cout_total_intrants %}{{ stats.cout_total_intrants|prix }}{% else %}-{% endif %}</div>
+                <div class="stat-card-label">Coût intrants</div>
+            </div>
+        </div>
     </div>
     {% endif %}
+
+    <div class="row g-4 mb-4">
+        {# Graphique #}
+        {% if stats_auto.graphique_dates %}
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-graph-up me-2"></i>Évolution de la culture</div>
+                <div class="card-body">
+                    <canvas id="chart-desktop" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Résumé rapide #}
+        <div class="{% if stats_auto.graphique_dates %}col-lg-4{% else %}col-lg-12{% endif %}">
+            <div class="card h-100">
+                <div class="card-header"><i class="bi bi-clipboard-data me-2"></i>Résumé</div>
+                <div class="card-body">
+                    <div class="culture-detail-item">
+                        <span class="culture-detail-label">Observations</span>
+                        <span class="culture-detail-value">{{ stats_auto.nb_observations|default:0 }}</span>
+                    </div>
+                    {% if stats_auto.dernier_stade %}
+                    <div class="culture-detail-item">
+                        <span class="culture-detail-label">Dernier stade</span>
+                        <span class="culture-detail-value">{{ stats_auto.dernier_stade }}</span>
+                    </div>
+                    {% endif %}
+                    {% if stats_auto.dernier_etat %}
+                    <div class="culture-detail-item">
+                        <span class="culture-detail-label">État</span>
+                        <span class="culture-detail-value"><span class="badge bg-{{ stats_auto.dernier_etat }}">{{ stats_auto.dernier_etat|capfirst }}</span></span>
+                    </div>
+                    {% endif %}
+                    <div class="culture-detail-item">
+                        <span class="culture-detail-label">Population visée</span>
+                        <span class="culture-detail-value">{{ culture.population_visee|default:"-"|nombre }}</span>
+                    </div>
+                    <div class="culture-detail-item">
+                        <span class="culture-detail-label">Population réelle</span>
+                        <span class="culture-detail-value">{{ culture.population_reelle|default:"-"|nombre }}</span>
+                    </div>
+
+                    {% if stats_auto.problemes_recents %}
+                    <div class="mt-3 p-2" style="background:#fef2f2;border-radius:8px;">
+                        <div style="font-weight:700;font-size:0.78rem;color:#991b1b;margin-bottom:4px;"><i class="bi bi-exclamation-triangle-fill"></i> Problèmes récents</div>
+                        {% for p in stats_auto.problemes_recents %}
+                        <div style="font-size:0.82rem;color:#991b1b;">{{ p }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Observations #}
     <div class="card">
-        <div class="card-header"><i class="bi bi-eye me-2"></i>Observations</div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-eye me-2"></i>Observations ({{ stats_auto.nb_observations|default:0 }})</span>
+        </div>
         <div class="card-body">
             {% for suivi in suivis %}
             <div class="card mb-3 border-{{ suivi.etat_general }}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h6>{{ suivi.date_observation|date:"d/m/Y" }} - {{ suivi.stade_croissance }}</h6>
+                            <h6 style="margin-bottom:4px;">{{ suivi.date_observation|date:"d/m/Y" }} - {{ suivi.stade_croissance }}</h6>
                             <span class="badge bg-{{ suivi.etat_general }}">{{ suivi.get_etat_general_display }}</span>
                         </div>
-                        <div>
-                            {% if suivi.hauteur_cm %}<span class="me-3"><strong>Hauteur:</strong> {{ suivi.hauteur_cm|nombre }} cm</span>{% endif %}
-                            {% if suivi.densite_plants %}<span><strong>Densité:</strong> {{ suivi.densite_plants|nombre }} plants/acre</span>{% endif %}
+                        <div style="text-align:right;">
+                            {% if suivi.hauteur_cm %}<span class="me-3"><strong>{{ suivi.hauteur_cm|nombre }}</strong> cm</span>{% endif %}
+                            {% if suivi.densite_plants %}<span><strong>{{ suivi.densite_plants|nombre }}</strong> plants/ac</span>{% endif %}
                         </div>
                     </div>
                     {% if suivi.problemes_observes %}<p class="mt-2 text-danger"><strong>Problèmes:</strong> {{ suivi.problemes_observes }}</p>{% endif %}
-                    {% if suivi.notes %}<p class="mt-1"><em>{{ suivi.notes }}</em></p>{% endif %}
+                    {% if suivi.notes %}<p class="mt-1" style="color:var(--text-secondary);"><em>{{ suivi.notes }}</em></p>{% endif %}
                     {% if suivi.photo %}<img src="{{ suivi.photo.url }}" class="img-thumbnail mt-2" style="max-height:200px">{% endif %}
-                    <small class="text-muted d-block mt-2">Par {{ suivi.observateur.get_full_name|default:"?" }}</small>
-                    {% if user.is_vendeur or user.is_directeur %}
-                    <a href="{% url 'tracking:suivi_edit' suivi.pk %}" class="btn btn-sm btn-outline-primary mt-1">Modifier</a>
-                    {% endif %}
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small style="color:var(--text-muted);">Par {{ suivi.observateur.get_full_name|default:"?" }}</small>
+                        {% if user.is_vendeur or user.is_directeur %}
+                        <a href="{% url 'tracking:suivi_edit' suivi.pk %}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             {% empty %}
-            <p class="text-muted">Aucune observation enregistrée.</p>
+            <div class="empty-state">
+                <i class="bi bi-graph-up"></i>
+                <p>Aucune observation enregistrée.</p>
+                {% if user.is_vendeur or user.is_directeur %}
+                <a href="{% url 'tracking:suivi_create' culture.pk %}" class="btn btn-herbic"><i class="bi bi-plus"></i> Première observation</a>
+                {% endif %}
+            </div>
             {% endfor %}
         </div>
     </div>
-    <a href="{% url 'clients:client_detail' culture.client.pk %}" class="btn btn-secondary mt-3">Retour au client</a>
+
+    <a href="{% url 'clients:client_detail' culture.client.pk %}" class="btn btn-outline-primary mt-3">
+        <i class="bi bi-arrow-left me-1"></i> Retour au client
+    </a>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if stats_auto.graphique_dates %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const dates = {{ chart_dates|safe }};
+const hauteurs = {{ chart_hauteurs|safe }};
+const densites = {{ chart_densites|safe }};
+const stades = {{ chart_stades|safe }};
+
+function createChart(canvasId) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+
+    const datasets = [];
+
+    // Hauteur
+    if (hauteurs.some(h => h !== null)) {
+        datasets.push({
+            label: 'Hauteur (cm)',
+            data: hauteurs,
+            borderColor: '#2e7d32',
+            backgroundColor: 'rgba(46, 125, 50, 0.1)',
+            fill: true,
+            tension: 0.3,
+            yAxisID: 'y',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+        });
+    }
+
+    // Densité
+    if (densites.some(d => d !== null)) {
+        datasets.push({
+            label: 'Densité (plants/ac)',
+            data: densites,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: false,
+            tension: 0.3,
+            yAxisID: 'y1',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            borderDash: [5, 5],
+        });
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: { labels: dates, datasets: datasets },
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(items) {
+                            const idx = items[0].dataIndex;
+                            return dates[idx] + (stades[idx] ? ' - ' + stades[idx] : '');
+                        }
+                    }
+                },
+                legend: { position: 'bottom' }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: 'Hauteur (cm)' },
+                    beginAtZero: true,
+                },
+                y1: {
+                    type: 'linear',
+                    display: densites.some(d => d !== null),
+                    position: 'right',
+                    title: { display: true, text: 'Densité (plants/ac)' },
+                    grid: { drawOnChartArea: false },
+                }
+            }
+        }
+    });
+}
+
+createChart('chart-desktop');
+createChart('chart-mobile');
+</script>
+{% endif %}
 {% endblock %}

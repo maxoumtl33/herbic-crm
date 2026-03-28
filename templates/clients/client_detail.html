@@ -51,6 +51,10 @@
     <div class="info-section">
         <div class="info-section-title"><i class="bi bi-person-fill"></i> Informations</div>
         <div class="info-row">
+            <span class="info-label">Nom</span>
+            <span class="info-value">{{ client.prenom }} {{ client.nom }}</span>
+        </div>
+        <div class="info-row">
             <span class="info-label">Adresse</span>
             <span class="info-value" style="font-size:0.82rem;">{{ client.adresse }}<br>{{ client.ville }}, {{ client.code_postal }}</span>
         </div>

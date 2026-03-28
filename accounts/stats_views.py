@@ -41,12 +41,12 @@ def page_statistiques(request):
             produit_stats[pk]['ca'] += ligne.sous_total
         produit_stats[pk]['nb_commandes'].add(ligne.commande_id)
 
+    # Convertir les sets en counts
+    for p in produit_stats.values():
+        p['nb_commandes'] = len(p['nb_commandes'])
+
     top_produits_qty = sorted(produit_stats.values(), key=lambda x: x['quantite'], reverse=True)[:10]
     top_produits_ca = sorted(produit_stats.values(), key=lambda x: x['ca'], reverse=True)[:10]
-    for p in top_produits_qty:
-        p['nb_commandes'] = len(p['nb_commandes'])
-    for p in top_produits_ca:
-        p['nb_commandes'] = len(p['nb_commandes'])
 
     # === CLASSEMENT VENDEURS (directeur uniquement) ===
     vendeur_stats = []

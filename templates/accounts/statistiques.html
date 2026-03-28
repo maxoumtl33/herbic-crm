@@ -93,21 +93,27 @@
 <div class="card mb-4">
     <div class="card-header"><i class="bi bi-tags me-2"></i>Ventes par catégorie</div>
     <div class="card-body">
-        {% for cat, ca in top_categories_globale %}
+        {% for cat, montant in top_categories_globale %}
         <div class="d-flex align-items-center mb-2">
             <div style="width:160px;font-weight:600;font-size:0.88rem;">{{ cat }}</div>
             <div style="flex:1;margin:0 12px;">
                 <div style="background:var(--border-color);border-radius:4px;height:24px;overflow:hidden;">
-                    {% if ca_total %}
-                    <div style="width:{% widthratio ca ca_total 100 %}%;background:var(--herbic-green);height:100%;border-radius:4px;min-width:2px;"></div>
-                    {% endif %}
+                    <div class="cat-bar" data-montant="{{ montant }}" style="background:var(--herbic-green);height:100%;border-radius:4px;min-width:2px;width:0%;"></div>
                 </div>
             </div>
-            <div style="font-weight:700;min-width:80px;text-align:right;">{{ ca|prix }}</div>
+            <div style="font-weight:700;min-width:80px;text-align:right;">{{ montant|prix }}</div>
         </div>
         {% endfor %}
     </div>
 </div>
+<script>
+(function() {
+    const bars = document.querySelectorAll('.cat-bar');
+    let max = 0;
+    bars.forEach(b => { const v = parseFloat(b.dataset.montant); if (v > max) max = v; });
+    if (max > 0) bars.forEach(b => { b.style.width = (parseFloat(b.dataset.montant) / max * 100) + '%'; });
+})();
+</script>
 {% endif %}
 
 {# Classement vendeurs (directeur only) #}

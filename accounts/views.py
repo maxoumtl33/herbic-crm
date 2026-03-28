@@ -31,15 +31,25 @@ def dashboard(request):
     context = {}
 
     if user.is_client():
+        from decimal import Decimal
+        from django.utils import timezone
         client = getattr(user, 'client_profile', None)
         if client:
             context['client'] = client
-            context['commandes'] = client.commandes.all()[:10]
-            context['cultures'] = client.cultures.all()
+            context['commandes'] = client.commandes.select_related('vendeur').all()[:10]
+            context['cultures'] = client.cultures.select_related('type_culture').all()
+            # Historique achats
+            annee = timezone.now().year
+            commandes_annee = client.commandes.filter(date_commande__year=annee, statut='livree')
+            context['total_depense_annee'] = sum(
+                (c.total for c in commandes_annee), Decimal('0')
+            )
+            context['nb_commandes_annee'] = client.commandes.filter(date_commande__year=annee).count()
         return render(request, 'accounts/dashboard_client.html', context)
 
     elif user.is_vendeur():
         from orders.models import Commande
+        from decimal import Decimal
         context['clients'] = user.clients_assignes.all()
         context['commandes_recentes'] = user.commandes_vendeur.order_by('-date_commande')[:10]
         context['commandes_en_livraison'] = user.commandes_vendeur.filter(
@@ -51,6 +61,17 @@ def dashboard(request):
         context['commandes_verification'] = user.commandes_vendeur.filter(
             statut='verification'
         ).select_related('client').order_by('date_commande')
+        # Stats vendeur
+        from django.utils import timezone
+        annee = timezone.now().year
+        commandes_annee = user.commandes_vendeur.filter(date_commande__year=annee)
+        ca_annuel = sum(
+            (c.total for c in commandes_annee.filter(statut='livree')),
+            Decimal('0'),
+        )
+        context['ca_annuel'] = ca_annuel
+        context['nb_commandes_annee'] = commandes_annee.count()
+        context['nb_commandes_livrees'] = commandes_annee.filter(statut='livree').count()
         return render(request, 'accounts/dashboard_vendeur.html', context)
 
     elif user.is_magasin():

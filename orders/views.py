@@ -10,6 +10,7 @@ from .models import Commande, LigneCommande, Facture
 from .forms import CommandeForm, LigneCommandeFormSet, CommandeStatutForm
 from accounts.decorators import staff_required, vendeur_or_directeur, directeur_required
 from tracking.models import log_action
+from .pdf import generer_facture_pdf
 
 
 def _check_commande_access(user, commande):
@@ -298,6 +299,12 @@ def facture_detail(request, pk):
         'facture': facture,
         'lignes': lignes,
     })
+
+
+@login_required
+def facture_pdf(request, pk):
+    facture = get_object_or_404(Facture, pk=pk)
+    return generer_facture_pdf(facture)
 
 
 @directeur_required

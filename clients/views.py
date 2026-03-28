@@ -60,10 +60,26 @@ def client_detail(request, pk):
 
     recommandations = generer_recommandations(client)
 
+    # Historique achats par année
+    from decimal import Decimal
+    from django.utils import timezone
+    from collections import defaultdict
+    annee_courante = timezone.now().year
+    historique_annuel = {}
+    for annee in range(annee_courante, annee_courante - 3, -1):
+        cmds = client.commandes.filter(date_commande__year=annee, statut='livree')
+        total = sum((c.total for c in cmds), Decimal('0'))
+        if total > 0 or cmds.exists():
+            historique_annuel[annee] = {
+                'nb_commandes': cmds.count(),
+                'total': total,
+            }
+
     return render(request, 'clients/client_detail.html', {
         'client': client,
         'cultures': cultures,
         'commandes': commandes,
+        'historique_annuel': historique_annuel,
         'recommandations': recommandations,
     })
 

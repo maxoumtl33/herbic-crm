@@ -1,10 +1,10 @@
 """API JSON pour la recherche dynamique."""
-import json
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from products.models import Produit, CategorieProduit
 from clients.models import Client
+from orders.models import Commande
 
 
 @login_required
@@ -61,3 +61,39 @@ def api_clients(request):
     } for c in clients[:30]]
 
     return JsonResponse({'clients': data})
+
+
+@login_required
+def api_recherche_globale(request):
+    """Recherche dans clients, produits et commandes en une seule requête."""
+    q = request.GET.get('q', '').strip()
+    if len(q) < 2:
+        return JsonResponse({'clients': [], 'produits': [], 'commandes': []})
+
+    # Clients
+    clients_qs = Client.objects.filter(
+        Q(nom__icontains=q) | Q(prenom__icontains=q) |
+        Q(nom_ferme__icontains=q) | Q(code__icontains=q)
+    )
+    if request.user.is_vendeur():
+        clients_qs = clients_qs.filter(vendeur=request.user)
+    clients = [{'id': c.pk, 'nom_ferme': c.nom_ferme, 'nom': f'{c.prenom} {c.nom}',
+                'type': 'client'} for c in clients_qs[:5]]
+
+    # Produits
+    produits_qs = Produit.objects.filter(
+        Q(nom__icontains=q) | Q(code__icontains=q)
+    )[:5]
+    produits = [{'id': p.pk, 'nom': p.nom, 'code': p.code, 'type': 'produit'} for p in produits_qs]
+
+    # Commandes
+    commandes_qs = Commande.objects.filter(
+        Q(client__nom_ferme__icontains=q) | Q(pk__icontains=q if q.isdigit() else 0)
+    )
+    if request.user.is_vendeur():
+        commandes_qs = commandes_qs.filter(vendeur=request.user)
+    commandes = [{'id': c.pk, 'numero': f'CMD-{c.pk:05d}', 'client': c.client.nom_ferme,
+                  'statut': c.get_statut_display(), 'type': 'commande'}
+                 for c in commandes_qs.select_related('client')[:5]]
+
+    return JsonResponse({'clients': clients, 'produits': produits, 'commandes': commandes})

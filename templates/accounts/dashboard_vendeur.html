@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load prix_filters %}
 {% block title %}Accueil - Herbic CRM{% endblock %}
 {% block nav_dashboard %}active{% endblock %}
 {% block sidebar_dashboard %}active{% endblock %}
@@ -152,13 +153,31 @@
 {# ======= DESKTOP ======= #}
 <div class="desktop-only">
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
+        <div class="col-6 col-md-2">
             <div class="stat-card">
                 <div class="stat-card-value text-herbic">{{ clients.count }}</div>
-                <div class="stat-card-label">Clients assignés</div>
+                <div class="stat-card-label">Clients</div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-6 col-md-2">
+            <div class="stat-card">
+                <div class="stat-card-value">{{ nb_commandes_annee }}</div>
+                <div class="stat-card-label">Commandes {{ annee|default:"" }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="stat-card">
+                <div class="stat-card-value" style="color:#22c55e;">{{ nb_commandes_livrees }}</div>
+                <div class="stat-card-label">Livrées</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card" style="border-left:4px solid var(--herbic-green);">
+                <div class="stat-card-value" style="font-size:1.4rem;color:var(--herbic-green);">{{ ca_annuel|prix }}</div>
+                <div class="stat-card-label">CA annuel HT</div>
+            </div>
+        </div>
+        <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-card-value" style="color:#f59e0b;">{{ commandes_recentes.count }}</div>
                 <div class="stat-card-label">Commandes récentes</div>

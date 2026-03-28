@@ -58,6 +58,19 @@
             <a href="{% url 'accounts:journal' %}" class="sidebar-link {% block sidebar_journal %}{% endblock %}">
                 <i class="bi bi-clock-history"></i> Journal d'activité
             </a>
+            <div class="sidebar-section">Exports</div>
+            <a href="{% url 'export_clients' %}" class="sidebar-link">
+                <i class="bi bi-download"></i> Clients CSV
+            </a>
+            <a href="{% url 'export_produits' %}" class="sidebar-link">
+                <i class="bi bi-download"></i> Produits CSV
+            </a>
+            <a href="{% url 'export_commandes' %}" class="sidebar-link">
+                <i class="bi bi-download"></i> Commandes CSV
+            </a>
+            <a href="{% url 'export_stocks' %}" class="sidebar-link">
+                <i class="bi bi-download"></i> Stocks CSV
+            </a>
             <a href="/admin/" class="sidebar-link" target="_blank">
                 <i class="bi bi-sliders"></i> Admin Django
             </a>
@@ -77,6 +90,16 @@
     <div class="main-content">
         <div class="topbar d-none d-md-flex">
             <div class="topbar-title">{% block topbar_title %}Herbic CRM{% endblock %}</div>
+            <div class="d-flex align-items-center gap-3">
+                {# Recherche globale #}
+                <div class="live-search-container" style="width:280px;">
+                    <div class="search-bar-live">
+                        <i class="bi bi-search search-icon-live"></i>
+                        <input type="text" id="global-search" class="form-control form-control-sm" placeholder="Rechercher..." autocomplete="off" style="border-radius:20px;padding-left:34px;">
+                    </div>
+                    <div class="live-search-results" id="global-results"></div>
+                </div>
+            </div>
             <div class="topbar-actions">
                 <a href="{% url 'accounts:profile' %}" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-person"></i> Profil
@@ -187,6 +210,39 @@
         const isOpen = menu.classList.contains('show');
         menu.classList.toggle('show');
         btn.classList.toggle('open');
+    }
+    </script>
+    <script>
+    // Recherche globale
+    const gs = document.getElementById('global-search');
+    const gr = document.getElementById('global-results');
+    let gst = null;
+    if (gs && gr) {
+        gs.addEventListener('input', function() {
+            clearTimeout(gst);
+            const q = this.value.trim();
+            if (q.length < 2) { gr.style.display = 'none'; return; }
+            gst = setTimeout(() => {
+                fetch('/api/recherche/?q=' + encodeURIComponent(q))
+                    .then(r => r.json())
+                    .then(data => {
+                        let html = '';
+                        data.clients.forEach(c => {
+                            html += `<a href="/clients/${c.id}/" class="live-search-item"><i class="bi bi-person me-2" style="color:var(--herbic-green)"></i><strong>${c.nom_ferme}</strong> <span style="color:var(--text-muted)">${c.nom}</span></a>`;
+                        });
+                        data.produits.forEach(p => {
+                            html += `<a href="/produits/${p.id}/" class="live-search-item"><i class="bi bi-box-seam me-2" style="color:#3b82f6"></i>${p.nom} <span style="color:var(--text-muted)">${p.code}</span></a>`;
+                        });
+                        data.commandes.forEach(c => {
+                            html += `<a href="/commandes/${c.id}/" class="live-search-item"><i class="bi bi-cart3 me-2" style="color:#8b5cf6"></i>${c.numero} <span style="color:var(--text-muted)">${c.client}</span></a>`;
+                        });
+                        if (!html) html = '<div class="live-search-item" style="color:var(--text-muted)">Aucun résultat</div>';
+                        gr.innerHTML = html;
+                        gr.style.display = 'block';
+                    });
+            }, 250);
+        });
+        gs.addEventListener('blur', () => setTimeout(() => gr.style.display = 'none', 200));
     }
     </script>
     {% block extra_js %}{% endblock %}

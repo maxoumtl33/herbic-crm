@@ -114,6 +114,9 @@
         </form>
         {% endif %}
 
+        <a href="{% url 'orders:facture_pdf' facture.pk %}" class="btn btn-herbic w-100 mb-2" target="_blank">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Télécharger PDF
+        </a>
         <a href="{% url 'orders:facture_list' %}" class="btn btn-outline-primary w-100">Retour aux factures</a>
     </div>
 </div>

@@ -18,5 +18,6 @@ urlpatterns = [
     path('factures/', views.facture_list, name='facture_list'),
     path('factures/<int:commande_pk>/creer/', views.facture_create, name='facture_create'),
     path('factures/<int:pk>/detail/', views.facture_detail, name='facture_detail'),
+    path('factures/<int:pk>/pdf/', views.facture_pdf, name='facture_pdf'),
     path('factures/<int:pk>/statut/', views.facture_update_statut, name='facture_update_statut'),
 ]

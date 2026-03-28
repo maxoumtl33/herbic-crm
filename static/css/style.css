@@ -567,6 +567,125 @@ body {
     background: var(--herbic-green-50);
 }
 
+/* ============================================
+   ORDER BUILDER - Product cards + cart
+   ============================================ */
+
+/* Category pills */
+.cat-pill {
+    border-radius: 20px !important;
+    padding: 5px 14px !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    border: 1px solid var(--border-color) !important;
+    background: white !important;
+    color: var(--text-secondary) !important;
+    white-space: nowrap;
+}
+.cat-pill:hover { border-color: var(--herbic-green) !important; color: var(--herbic-green) !important; }
+.cat-pill.active {
+    background: var(--herbic-green) !important;
+    border-color: var(--herbic-green) !important;
+    color: white !important;
+}
+
+/* Product card in order builder */
+.product-card-order {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.product-card-order:hover {
+    border-color: var(--herbic-green);
+    box-shadow: 0 3px 12px rgba(46,125,50,0.12);
+    transform: translateY(-1px);
+}
+.product-card-order.product-card-added {
+    border-color: #22c55e;
+    background: #f0fdf4;
+    cursor: default;
+    opacity: 0.7;
+}
+.product-card-order.product-card-added:hover {
+    transform: none;
+    box-shadow: none;
+}
+.product-card-cat {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    width: fit-content;
+}
+.product-card-name {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+.product-card-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.product-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+}
+.product-card-price {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--herbic-green-dark);
+}
+.product-card-add-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--herbic-green);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: transform 0.1s;
+}
+.product-card-order:hover .product-card-add-btn {
+    transform: scale(1.1);
+}
+.product-card-added-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #22c55e;
+}
+
+/* Selected products in cart */
+.selected-row {
+    border-bottom: 1px solid #f1f5f9;
+}
+.selected-row:last-child { border-bottom: none; }
+.selected-row:hover { background: #fafbfc; }
+.selected-cat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
 /* Alert tweaks */
 .alert {
     border-radius: 8px;

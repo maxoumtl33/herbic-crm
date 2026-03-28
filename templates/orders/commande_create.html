@@ -33,61 +33,45 @@
         </div>
     </div>
 
-    {# Recherche et ajout de produits #}
+    {# Catalogue produits #}
     <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-box-seam me-2"></i>Produits</span>
-        </div>
+        <div class="card-header"><i class="bi bi-box-seam me-2"></i>Ajouter des produits</div>
         <div class="card-body">
-            {# Barre de recherche + filtres #}
-            <div class="row g-2 mb-3">
-                <div class="col-md-7">
-                    <div class="search-bar-live">
-                        <i class="bi bi-search search-icon-live"></i>
-                        <input type="text" id="product-search" class="form-control" placeholder="Rechercher un produit..." autocomplete="off">
-                    </div>
+            {# Recherche + catégories sur une seule ligne #}
+            <div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+                <div class="search-bar-live" style="flex:1;min-width:200px;">
+                    <i class="bi bi-search search-icon-live"></i>
+                    <input type="text" id="product-search" class="form-control" placeholder="Rechercher..." autocomplete="off">
                 </div>
-                <div class="col-md-5">
-                    <select id="product-category" class="form-select">
-                        <option value="">Toutes les catégories</option>
-                        <option value="semence">Semences</option>
-                        <option value="pesticide">Pesticides</option>
-                        <option value="engrais_foliaire">Engrais foliaires</option>
-                        <option value="biostimulant">Biostimulants</option>
-                        <option value="additif_pulverisation">Additifs</option>
-                    </select>
+                <div class="cat-pills d-flex gap-1 flex-wrap">
+                    <button type="button" class="btn btn-sm cat-pill active" data-cat="">Tout</button>
+                    <button type="button" class="btn btn-sm cat-pill" data-cat="semence">Semences</button>
+                    <button type="button" class="btn btn-sm cat-pill" data-cat="pesticide">Pesticides</button>
+                    <button type="button" class="btn btn-sm cat-pill" data-cat="engrais_foliaire">Engrais</button>
+                    <button type="button" class="btn btn-sm cat-pill" data-cat="biostimulant">Biostimulants</button>
+                    <button type="button" class="btn btn-sm cat-pill" data-cat="additif_pulverisation">Additifs</button>
                 </div>
             </div>
 
-            {# Résultats de recherche #}
-            <div id="product-results" style="display:none;">
-                <div id="product-results-list" class="row g-2 mb-3" style="max-height:300px;overflow-y:auto;"></div>
-            </div>
-
-            {# Produits sélectionnés #}
-            <div id="selected-products">
-                <div style="font-weight:700;font-size:0.82rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">
-                    Produits dans la commande
-                </div>
-                <div id="selected-list"></div>
-                <p id="no-products" class="text-center py-3" style="color:var(--text-muted);">
-                    <i class="bi bi-arrow-up"></i> Recherchez et ajoutez des produits ci-dessus
-                </p>
-            </div>
-
-            {# Champs cachés pour le formset #}
-            <div id="formset-container" style="display:none;">
-                {{ formset.management_form }}
-                {% for f in formset %}
-                {{ f.produit }}{{ f.quantite }}{{ f.prix_unitaire }}{{ f.DELETE }}{{ f.id }}
-                {% endfor %}
+            {# Grille de produits #}
+            <div id="product-grid" class="row g-2" style="max-height:400px;overflow-y:auto;"></div>
+            <div id="product-empty" class="text-center py-4" style="display:none;color:var(--text-muted);">
+                <i class="bi bi-search" style="font-size:1.5rem;"></i>
+                <p class="mt-1 mb-0">Aucun produit trouvé</p>
             </div>
         </div>
     </div>
 
-    {# Résumé prix #}
-    <div class="card mb-4" id="price-summary" style="display:none;">
-        <div class="card-body">
+    {# Produits sélectionnés #}
+    <div class="card mb-4" id="selected-card" style="display:none;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-cart-check me-2"></i>Panier (<span id="cart-count">0</span>)</span>
+            <span id="cart-total-header" style="font-weight:700;color:var(--herbic-green);"></span>
+        </div>
+        <div class="card-body p-0">
+            <div id="selected-list"></div>
+        </div>
+        <div class="card-footer bg-transparent">
             <div class="d-flex justify-content-between mb-1"><span>Sous-total HT</span><strong id="subtotal">$0</strong></div>
             <div class="d-flex justify-content-between mb-1" style="font-size:0.85rem;color:var(--text-muted);"><span>TPS (5%)</span><span id="tps">$0</span></div>
             <div class="d-flex justify-content-between mb-1" style="font-size:0.85rem;color:var(--text-muted);"><span>TVQ (9.975%)</span><span id="tvq">$0</span></div>
@@ -98,8 +82,18 @@
         </div>
     </div>
 
+    {# Champs cachés pour le formset #}
+    <div id="formset-container" style="display:none;">
+        {{ formset.management_form }}
+        {% for f in formset %}
+        {{ f.produit }}{{ f.quantite }}{{ f.prix_unitaire }}{{ f.DELETE }}{{ f.id }}
+        {% endfor %}
+    </div>
+
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-lg me-1"></i> Créer la commande</button>
+        <button type="submit" class="btn btn-success btn-lg" id="submit-btn" disabled>
+            <i class="bi bi-check-lg me-1"></i> Créer la commande
+        </button>
         <a href="{% url 'orders:commande_list' %}" class="btn btn-outline-primary btn-lg">Annuler</a>
     </div>
 </form>
@@ -110,104 +104,135 @@
 const TAUX_TPS = 0.05;
 const TAUX_TVQ = 0.09975;
 let selectedProducts = [];
+let allProducts = [];
+let currentCat = '';
 let searchTimeout = null;
 
 const searchInput = document.getElementById('product-search');
-const categorySelect = document.getElementById('product-category');
-const resultsDiv = document.getElementById('product-results');
-const resultsList = document.getElementById('product-results-list');
+const productGrid = document.getElementById('product-grid');
+const productEmpty = document.getElementById('product-empty');
+const selectedCard = document.getElementById('selected-card');
 const selectedList = document.getElementById('selected-list');
-const noProducts = document.getElementById('no-products');
-const priceSummary = document.getElementById('price-summary');
+const submitBtn = document.getElementById('submit-btn');
 
 function formatPrice(val) {
+    if (val === 0) return '$0';
     if (val === Math.floor(val)) return '$' + Math.floor(val);
     return '$' + val.toFixed(2);
 }
 
-function searchProducts() {
-    const q = searchInput.value;
-    const cat = categorySelect.value;
-    if (q.length < 1 && !cat) { resultsDiv.style.display = 'none'; return; }
+// Catégorie badge couleur
+function catColor(type) {
+    const colors = {
+        'semence': '#22c55e', 'pesticide': '#ef4444', 'engrais_foliaire': '#3b82f6',
+        'biostimulant': '#8b5cf6', 'additif_pulverisation': '#f59e0b'
+    };
+    return colors[type] || '#94a3b8';
+}
 
-    fetch(`/api/produits/?q=${encodeURIComponent(q)}&categorie=${encodeURIComponent(cat)}`)
+function fetchProducts() {
+    const q = searchInput.value;
+    fetch(`/api/produits/?q=${encodeURIComponent(q)}&categorie=${encodeURIComponent(currentCat)}`)
         .then(r => r.json())
         .then(data => {
-            resultsList.innerHTML = '';
-            if (data.produits.length === 0) {
-                resultsList.innerHTML = '<div class="col-12 text-center py-2" style="color:var(--text-muted);">Aucun produit trouvé</div>';
-            }
-            data.produits.forEach(p => {
-                const alreadyAdded = selectedProducts.some(sp => sp.id === p.id);
-                const col = document.createElement('div');
-                col.className = 'col-md-6 col-lg-4';
-                col.innerHTML = `
-                    <div class="product-result-card ${alreadyAdded ? 'already-added' : ''}" data-id="${p.id}" data-nom="${p.nom}" data-code="${p.code}" data-prix="${p.prix || 0}" data-format="${p.format}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div style="font-weight:700;font-size:0.88rem;">${p.nom}</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted);">${p.code} · ${p.format}</div>
-                                <span class="badge bg-secondary" style="font-size:0.65rem;margin-top:2px;">${p.categorie}</span>
-                            </div>
-                            <div style="text-align:right;">
-                                ${p.prix ? '<div style="font-weight:700;color:var(--herbic-green);">$' + p.prix + '</div>' : ''}
-                                ${alreadyAdded ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-plus-circle" style="font-size:1.2rem;color:var(--herbic-green);cursor:pointer;"></i>'}
-                            </div>
-                        </div>
-                    </div>`;
-                if (!alreadyAdded) {
-                    col.querySelector('.product-result-card').addEventListener('click', () => addProduct(p));
-                }
-                resultsList.appendChild(col);
-            });
-            resultsDiv.style.display = 'block';
+            allProducts = data.produits;
+            renderGrid();
         });
+}
+
+function renderGrid() {
+    productGrid.innerHTML = '';
+    const products = allProducts;
+
+    if (products.length === 0) {
+        productGrid.style.display = 'none';
+        productEmpty.style.display = 'block';
+        return;
+    }
+    productGrid.style.display = 'flex';
+    productEmpty.style.display = 'none';
+
+    products.forEach(p => {
+        const added = selectedProducts.some(sp => sp.id === p.id);
+        const col = document.createElement('div');
+        col.className = 'col-xl-3 col-lg-4 col-md-6';
+        col.innerHTML = `
+            <div class="product-card-order ${added ? 'product-card-added' : ''}" data-id="${p.id}">
+                <div class="product-card-cat" style="background:${catColor(p.type_categorie)}20;color:${catColor(p.type_categorie)};">
+                    ${p.categorie}
+                </div>
+                <div class="product-card-name">${p.nom}</div>
+                <div class="product-card-meta">${p.code} · ${p.format}</div>
+                <div class="product-card-bottom">
+                    <span class="product-card-price">${p.prix ? '$'+p.prix : ''}</span>
+                    ${added
+                        ? '<span class="product-card-added-badge"><i class="bi bi-check-lg"></i> Ajouté</span>'
+                        : '<span class="product-card-add-btn"><i class="bi bi-plus-lg"></i></span>'
+                    }
+                </div>
+            </div>`;
+        if (!added) {
+            col.querySelector('.product-card-order').addEventListener('click', () => addProduct(p));
+        }
+        productGrid.appendChild(col);
+    });
 }
 
 function addProduct(p) {
     if (selectedProducts.some(sp => sp.id === p.id)) return;
-    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, quantite: 1 });
+    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, categorie: p.categorie, type_categorie: p.type_categorie, quantite: 1 });
     renderSelected();
-    searchProducts();
+    renderGrid();
 }
 
 function removeProduct(id) {
     selectedProducts = selectedProducts.filter(p => p.id !== id);
     renderSelected();
-    searchProducts();
+    renderGrid();
 }
 
 function updateQuantity(id, qty) {
     const p = selectedProducts.find(sp => sp.id === id);
-    if (p) { p.quantite = Math.max(0.01, parseFloat(qty) || 1); }
+    if (p) p.quantite = Math.max(0.01, parseFloat(qty) || 1);
     updateTotals();
+    syncFormset();
 }
 
 function renderSelected() {
     selectedList.innerHTML = '';
-    noProducts.style.display = selectedProducts.length === 0 ? 'block' : 'none';
-    priceSummary.style.display = selectedProducts.length > 0 ? 'block' : 'none';
+    const hasItems = selectedProducts.length > 0;
+    selectedCard.style.display = hasItems ? 'block' : 'none';
+    submitBtn.disabled = !hasItems;
+    document.getElementById('cart-count').textContent = selectedProducts.length;
 
-    selectedProducts.forEach((p, i) => {
-        const subtotal = p.prix * p.quantite;
-        const div = document.createElement('div');
-        div.className = 'selected-product-row';
-        div.innerHTML = `
-            <div class="d-flex align-items-center gap-3">
-                <button type="button" class="btn-remove-product" onclick="removeProduct(${p.id})"><i class="bi bi-x-lg"></i></button>
+    selectedProducts.forEach(p => {
+        const st = p.prix * p.quantite;
+        const row = document.createElement('div');
+        row.className = 'selected-row';
+        row.innerHTML = `
+            <div class="d-flex align-items-center gap-3 px-3 py-3">
+                <button type="button" class="btn-remove-product" onclick="removeProduct(${p.id})">
+                    <i class="bi bi-x-lg"></i>
+                </button>
                 <div style="flex:1;min-width:0;">
-                    <div style="font-weight:700;font-size:0.9rem;">${p.nom}</div>
-                    <div style="font-size:0.78rem;color:var(--text-muted);">${p.code} · ${p.format}</div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="selected-cat-dot" style="background:${catColor(p.type_categorie)};"></span>
+                        <strong style="font-size:0.9rem;">${p.nom}</strong>
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);">${p.code} · ${p.format}</div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <input type="number" class="form-control form-control-sm qty-input" value="${p.quantite}" min="0.01" step="1" onchange="updateQuantity(${p.id}, this.value)" oninput="updateQuantity(${p.id}, this.value)">
-                    <div style="text-align:right;min-width:70px;">
-                        <div style="font-size:0.78rem;color:var(--text-muted);">${p.prix ? '$'+p.prix+'/u' : ''}</div>
-                        <div style="font-weight:700;">${subtotal > 0 ? formatPrice(subtotal) : ''}</div>
+                <div class="d-flex align-items-center gap-3">
+                    <input type="number" class="form-control form-control-sm qty-input"
+                           value="${p.quantite}" min="0.01" step="1"
+                           onchange="updateQuantity(${p.id}, this.value)"
+                           oninput="updateQuantity(${p.id}, this.value)">
+                    <div style="text-align:right;min-width:80px;">
+                        ${p.prix ? '<div style="font-size:0.72rem;color:var(--text-muted);">'+formatPrice(p.prix)+'/u</div>' : ''}
+                        <div style="font-weight:700;font-size:0.95rem;">${st > 0 ? formatPrice(st) : ''}</div>
                     </div>
                 </div>
             </div>`;
-        selectedList.appendChild(div);
+        selectedList.appendChild(row);
     });
     updateTotals();
     syncFormset();
@@ -223,62 +248,68 @@ function updateTotals() {
     document.getElementById('tps').textContent = formatPrice(tps);
     document.getElementById('tvq').textContent = formatPrice(tvq);
     document.getElementById('total-ttc').textContent = formatPrice(ttc);
+    document.getElementById('cart-total-header').textContent = formatPrice(ttc) + ' TTC';
 }
 
 function syncFormset() {
-    // Met à jour les champs cachés du formset Django
     const container = document.getElementById('formset-container');
     const totalForms = container.querySelector('[name$="TOTAL_FORMS"]');
-    const maxForms = selectedProducts.length + 5;
     totalForms.value = selectedProducts.length;
-
-    // Supprimer les anciens champs
     container.querySelectorAll('.dynamic-field').forEach(el => el.remove());
-
     selectedProducts.forEach((p, i) => {
         const prefix = `lignes-${i}`;
-        const fields = [
+        container.insertAdjacentHTML('beforeend', [
             `<input type="hidden" name="${prefix}-produit" value="${p.id}" class="dynamic-field">`,
             `<input type="hidden" name="${prefix}-quantite" value="${p.quantite}" class="dynamic-field">`,
             `<input type="hidden" name="${prefix}-prix_unitaire" value="${p.prix}" class="dynamic-field">`,
             `<input type="hidden" name="${prefix}-id" value="" class="dynamic-field">`,
-        ];
-        container.insertAdjacentHTML('beforeend', fields.join(''));
+        ].join(''));
     });
 }
 
-// Events
+// Catégorie pills
+document.querySelectorAll('.cat-pill').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentCat = this.dataset.cat;
+        fetchProducts();
+    });
+});
+
+// Recherche
 searchInput.addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(searchProducts, 200);
+    searchTimeout = setTimeout(fetchProducts, 200);
 });
-categorySelect.addEventListener('change', searchProducts);
 
-// Charger tous les produits au départ
+// Init: charger tous les produits
 document.addEventListener('DOMContentLoaded', () => {
-    searchProducts();
-    // Charger les produits depuis les recommandations si on vient de la fiche client
+    fetchProducts();
+
+    // Charger depuis recommandations si from_reco
     const recoItems = sessionStorage.getItem('recoItems');
     if (recoItems && new URLSearchParams(window.location.search).get('from_reco')) {
         const items = JSON.parse(recoItems);
         sessionStorage.removeItem('recoItems');
-        // Charger les détails des produits via l'API
-        items.forEach(item => {
-            fetch(`/api/produits/?q=&categorie=`)
-                .then(r => r.json())
-                .then(data => {
+        fetch('/api/produits/?q=&categorie=')
+            .then(r => r.json())
+            .then(data => {
+                items.forEach(item => {
                     const p = data.produits.find(pr => pr.id == item.id);
                     if (p && !selectedProducts.some(sp => sp.id === p.id)) {
                         selectedProducts.push({
                             id: p.id, nom: p.nom, code: p.code,
                             prix: p.prix || parseFloat(item.prix) || 0,
-                            format: p.format,
+                            format: p.format, categorie: p.categorie,
+                            type_categorie: p.type_categorie,
                             quantite: parseFloat(item.qty) || 1
                         });
-                        renderSelected();
                     }
                 });
-        });
+                renderSelected();
+                renderGrid();
+            });
     }
 });
 </script>

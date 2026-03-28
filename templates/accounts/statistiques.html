@@ -156,14 +156,16 @@
 <div class="card mb-4">
     <div class="card-header"><i class="bi bi-person-lines-fill me-2"></i>Analyse par client</div>
     <div class="card-body">
-        <form method="get" class="d-flex gap-2 mb-3">
-            <select name="client" class="form-select" style="max-width:400px;">
-                <option value="">Sélectionner un client...</option>
-                {% for c in clients_list %}
-                <option value="{{ c.pk }}" {% if client_id == c.pk|stringformat:"d" %}selected{% endif %}>{{ c.nom_ferme }} ({{ c.prenom }} {{ c.nom }})</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn btn-herbic"><i class="bi bi-search me-1"></i> Analyser</button>
+        <form method="get" id="client-analysis-form" class="mb-3">
+            <div class="live-search-container" style="max-width:450px;">
+                <div class="search-bar-live">
+                    <i class="bi bi-search search-icon-live"></i>
+                    <input type="text" id="client-analysis-search" class="form-control" placeholder="Rechercher un client par nom, ferme, ville..." autocomplete="off"
+                           value="{% if client_detail %}{{ client_detail.client.nom_ferme }} ({{ client_detail.client.prenom }} {{ client_detail.client.nom }}){% endif %}">
+                </div>
+                <div class="live-search-results" id="client-analysis-results"></div>
+            </div>
+            <input type="hidden" name="client" id="client-analysis-id" value="{{ client_id }}">
         </form>
 
         {% if client_detail %}
@@ -226,4 +228,52 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csInput = document.getElementById('client-analysis-search');
+const csResults = document.getElementById('client-analysis-results');
+const csId = document.getElementById('client-analysis-id');
+const csForm = document.getElementById('client-analysis-form');
+let csTimeout = null;
+
+if (csInput) {
+    csInput.addEventListener('input', function() {
+        clearTimeout(csTimeout);
+        const q = this.value.trim();
+        if (q.length < 2) { csResults.style.display = 'none'; return; }
+        csTimeout = setTimeout(() => {
+            fetch('/api/clients/?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(data => {
+                    let html = '';
+                    data.clients.forEach(c => {
+                        html += `<div class="live-search-item" data-id="${c.id}" data-label="${c.nom_ferme} (${c.nom})" style="cursor:pointer;">
+                            <strong>${c.nom_ferme}</strong> <span style="color:var(--text-muted);">${c.nom} · ${c.ville}</span>
+                        </div>`;
+                    });
+                    if (!html) html = '<div class="live-search-item" style="color:var(--text-muted);">Aucun client trouvé</div>';
+                    csResults.innerHTML = html;
+                    csResults.style.display = 'block';
+
+                    csResults.querySelectorAll('[data-id]').forEach(item => {
+                        item.addEventListener('mousedown', function(e) {
+                            e.preventDefault();
+                            csId.value = this.dataset.id;
+                            csInput.value = this.dataset.label;
+                            csResults.style.display = 'none';
+                            csForm.submit();
+                        });
+                    });
+                });
+        }, 200);
+    });
+
+    csInput.addEventListener('focus', function() {
+        if (this.value.length >= 2) this.dispatchEvent(new Event('input'));
+    });
+    csInput.addEventListener('blur', () => setTimeout(() => csResults.style.display = 'none', 300));
+}
+</script>
 {% endblock %}

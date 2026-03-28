@@ -24,8 +24,22 @@
             <div class="stat-box-label">Clients</div>
         </div>
         <div class="stat-box">
-            <div class="stat-box-value">{{ commandes_recentes.count }}</div>
+            <div class="stat-box-value">{{ nb_commandes_annee }}</div>
             <div class="stat-box-label">Commandes</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-value" style="color:var(--herbic-green);font-size:0.95rem;">{{ ca_annuel|prix }}</div>
+            <div class="stat-box-label">CA annuel</div>
+        </div>
+    </div>
+    <div class="stat-grid mb-3">
+        <div class="stat-box">
+            <div class="stat-box-value" style="color:#22c55e;">{{ nb_commandes_livrees }}</div>
+            <div class="stat-box-label">Livrées</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-box-value">{{ commandes_en_livraison.count }}</div>
+            <div class="stat-box-label">À livrer</div>
         </div>
         <div class="stat-box">
             <a href="{% url 'orders:commande_create' %}" class="text-decoration-none">

@@ -215,6 +215,22 @@
     </div>
     {% endif %}
 
+    {# Historique achats annuel #}
+    {% if historique_annuel %}
+    <div class="info-section">
+        <div class="info-section-title"><i class="bi bi-graph-up-arrow"></i> Historique achats</div>
+        {% for annee, data in historique_annuel.items %}
+        <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:#f0f0f0 !important;">
+            <div>
+                <strong>{{ annee }}</strong>
+                <span style="font-size:0.82rem;color:var(--text-muted);margin-left:8px;">{{ data.nb_commandes }} commande{{ data.nb_commandes|pluralize }}</span>
+            </div>
+            <strong style="color:var(--herbic-green);">{{ data.total|prix }}</strong>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     {# Commandes #}
     {% if commandes %}
     <div class="info-section">
@@ -287,6 +303,27 @@
             </div>
         </div>
     </div>
+
+    {# Historique achats annuel desktop #}
+    {% if historique_annuel %}
+    <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-graph-up-arrow me-2"></i>Historique des achats</div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Année</th><th>Commandes livrées</th><th>Total HT</th></tr></thead>
+                <tbody>
+                {% for annee, data in historique_annuel.items %}
+                <tr>
+                    <td style="font-weight:700;">{{ annee }}</td>
+                    <td>{{ data.nb_commandes }} commande{{ data.nb_commandes|pluralize }}</td>
+                    <td style="font-weight:700;color:var(--herbic-green);">{{ data.total|prix }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 
     {# Cultures #}
     <div class="d-flex justify-content-between align-items-center mb-3">

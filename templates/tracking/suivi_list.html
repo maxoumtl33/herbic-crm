@@ -153,61 +153,68 @@
         {% endif %}
     </div>
 
-    {# Résumé en haut #}
+    {# Résumé en haut - KPIs visuels #}
+    {% if stats %}
     <div class="row g-3 mb-4">
-        {# Santé actuelle #}
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-header"><i class="bi bi-heart-pulse me-2"></i>État actuel</div>
-                <div class="card-body text-center">
-                    {% if stats_auto.dernier_etat %}
-                    <div style="font-size:3rem;margin-bottom:4px;">
-                        {% if stats_auto.dernier_etat == 'excellent' %}🌟{% elif stats_auto.dernier_etat == 'bon' %}✅{% elif stats_auto.dernier_etat == 'moyen' %}⚠️{% elif stats_auto.dernier_etat == 'faible' %}🔴{% else %}❌{% endif %}
-                    </div>
-                    <span class="badge bg-{{ stats_auto.dernier_etat }}" style="font-size:1rem;padding:6px 16px;">{{ stats_auto.dernier_etat|capfirst }}</span>
-                    {% if stats_auto.dernier_stade %}
-                    <div style="margin-top:8px;font-weight:600;color:var(--text-secondary);">{{ stats_auto.dernier_stade }}</div>
-                    {% endif %}
-                    <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">{{ stats_auto.nb_observations }} visite{{ stats_auto.nb_observations|pluralize }}</div>
-                    {% else %}
-                    <div style="color:var(--text-muted);padding:20px;">Aucune visite</div>
-                    {% endif %}
-                </div>
+        {# État actuel #}
+        <div class="col-6 col-lg-2">
+            <div class="stat-card h-100" style="border-left:4px solid {% if stats_auto.dernier_etat == 'excellent' or stats_auto.dernier_etat == 'bon' %}#22c55e{% elif stats_auto.dernier_etat == 'moyen' %}#f59e0b{% else %}#ef4444{% endif %};">
+                {% if stats_auto.dernier_etat %}
+                <span class="badge bg-{{ stats_auto.dernier_etat }}" style="font-size:0.85rem;padding:5px 14px;">{{ stats_auto.dernier_etat|capfirst }}</span>
+                {% if stats_auto.dernier_stade %}
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">{{ stats_auto.dernier_stade }}</div>
+                {% endif %}
+                {% else %}
+                <div class="stat-card-value">-</div>
+                {% endif %}
+                <div class="stat-card-label">État</div>
             </div>
         </div>
-
-        {# Chiffres clés #}
-        <div class="col-md-4">
-            <div class="card h-100">
-                <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Chiffres clés</div>
-                <div class="card-body">
-                    {% if stats %}
-                    <div class="culture-detail-item">
-                        <span class="culture-detail-label">Germination</span>
-                        <span class="culture-detail-value" style="{% if stats.taux_germination and stats.taux_germination >= 95 %}color:#22c55e{% elif stats.taux_germination and stats.taux_germination >= 85 %}color:#f59e0b{% elif stats.taux_germination %}color:#ef4444{% endif %}">
-                            {% if stats.taux_germination %}{{ stats.taux_germination|nombre }}%{% else %}-{% endif %}
-                        </span>
-                    </div>
-                    <div class="culture-detail-item">
-                        <span class="culture-detail-label">Pop. visée → réelle</span>
-                        <span class="culture-detail-value">{{ culture.population_visee|default:"-"|nombre }} → {{ culture.population_reelle|default:"?"|nombre }}</span>
-                    </div>
-                    <div class="culture-detail-item">
-                        <span class="culture-detail-label">Rendement estimé</span>
-                        <span class="culture-detail-value">{{ stats.rendement_estime|default:"-"|nombre }} boiss./ac</span>
-                    </div>
-                    <div class="culture-detail-item">
-                        <span class="culture-detail-label">Rendement réel</span>
-                        <span class="culture-detail-value" style="{% if stats.rendement_reel %}font-weight:800;color:var(--herbic-green){% endif %}">{{ stats.rendement_reel|default:"À venir"|nombre }} boiss./ac</span>
-                    </div>
-                    <div class="culture-detail-item">
-                        <span class="culture-detail-label">Semis → Récolte</span>
-                        <span class="culture-detail-value">{{ stats.date_semis|date:"d/m"|default:"?" }} → {{ stats.date_recolte|date:"d/m"|default:"?" }}</span>
-                    </div>
-                    {% endif %}
-                </div>
+        {# Germination #}
+        <div class="col-6 col-lg-2">
+            <div class="stat-card h-100" style="border-left:4px solid {% if stats.taux_germination and stats.taux_germination >= 95 %}#22c55e{% elif stats.taux_germination and stats.taux_germination >= 85 %}#f59e0b{% elif stats.taux_germination %}#ef4444{% else %}var(--border-color){% endif %};">
+                <div class="stat-card-value" style="font-size:1.6rem;">{% if stats.taux_germination %}{{ stats.taux_germination|nombre }}%{% else %}-{% endif %}</div>
+                <div class="stat-card-label">Germination</div>
+                {% if culture.population_visee and culture.population_reelle %}
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">{{ culture.population_reelle|nombre }} / {{ culture.population_visee|nombre }}</div>
+                {% endif %}
             </div>
         </div>
+        {# Rendement estimé #}
+        <div class="col-6 col-lg-2">
+            <div class="stat-card h-100">
+                <div class="stat-card-value" style="font-size:1.6rem;">{{ stats.rendement_estime|default:"-"|nombre }}</div>
+                <div class="stat-card-label">Rend. estimé</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">boiss./acre</div>
+            </div>
+        </div>
+        {# Rendement réel #}
+        <div class="col-6 col-lg-2">
+            <div class="stat-card h-100" style="{% if stats.rendement_reel %}border-left:4px solid #22c55e;{% endif %}">
+                <div class="stat-card-value" style="font-size:1.6rem;{% if stats.rendement_reel %}color:#22c55e;{% endif %}">{{ stats.rendement_reel|default:"-"|nombre }}</div>
+                <div class="stat-card-label">Rend. réel</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">boiss./acre</div>
+            </div>
+        </div>
+        {# Dates #}
+        <div class="col-6 col-lg-2">
+            <div class="stat-card h-100">
+                <div class="stat-card-value" style="font-size:1.2rem;">{{ stats.date_semis|date:"d/m"|default:"-" }}</div>
+                <div class="stat-card-label">Semis</div>
+                {% if stats.date_recolte %}
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">Récolte: {{ stats.date_recolte|date:"d/m" }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {# Visites #}
+        <div class="col-6 col-lg-2">
+            <div class="stat-card h-100">
+                <div class="stat-card-value" style="font-size:1.6rem;">{{ stats_auto.nb_observations|default:0 }}</div>
+                <div class="stat-card-label">Visites</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
         {# Coûts #}
         <div class="col-md-4">

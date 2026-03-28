@@ -26,6 +26,9 @@ def suivi_list(request, culture_pk):
         'chart_hauteurs': json.dumps(stats_auto.get('graphique_hauteurs', [])),
         'chart_densites': json.dumps(stats_auto.get('graphique_densites', [])),
         'chart_stades': json.dumps(stats_auto.get('graphique_stades', [])),
+        'chart_etats': json.dumps(stats_auto.get('graphique_etats', [])),
+        'detail_couts': stats_auto.get('detail_couts', []),
+        'cout_par_acre': stats_auto.get('cout_par_acre'),
     })
 
 

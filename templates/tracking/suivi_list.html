@@ -214,21 +214,26 @@
             <div class="card h-100">
                 <div class="card-header"><i class="bi bi-currency-dollar me-2"></i>Coût des produits</div>
                 <div class="card-body">
-                    {% if stats and stats.cout_total_intrants %}
+                    {% if detail_couts %}
                     <div class="text-center" style="margin-bottom:12px;">
                         <div style="font-size:2rem;font-weight:800;color:var(--herbic-green);">{{ stats.cout_total_intrants|prix }}</div>
                         <div style="font-size:0.82rem;color:var(--text-muted);">Total produits appliqués</div>
+                        {% if cout_par_acre %}
+                        <div style="font-size:0.95rem;font-weight:600;color:var(--text-secondary);margin-top:2px;">{{ cout_par_acre|prix }} / acre</div>
+                        {% endif %}
                     </div>
-                    {% if culture.superficie_acres %}
-                    <div class="culture-detail-item">
-                        <span class="culture-detail-label">Coût / acre</span>
-                        <span class="culture-detail-value">{{ stats.cout_total_intrants|prix }} ÷ {{ culture.superficie_acres|nombre }} ac</span>
+                    <div style="border-top:1px solid var(--border-color);padding-top:8px;">
+                        {% for d in detail_couts %}
+                        <div class="d-flex justify-content-between py-1" style="font-size:0.82rem;">
+                            <span style="color:var(--text-secondary);">{{ d.nom }} <span style="color:var(--text-muted);">({{ d.nb_unites }} {{ d.contenant }}s)</span></span>
+                            <span style="font-weight:600;">{{ d.cout|prix }}</span>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endif %}
                     {% else %}
                     <div class="text-center py-3" style="color:var(--text-muted);">
                         <i class="bi bi-calculator" style="font-size:1.5rem;"></i>
-                        <p class="mt-1 mb-0" style="font-size:0.85rem;">Calculé automatiquement à partir des produits d'arrosage</p>
+                        <p class="mt-1 mb-0" style="font-size:0.85rem;">Ajoutez des produits d'arrosage sur la fiche client pour voir les coûts</p>
                     </div>
                     {% endif %}
 
@@ -248,9 +253,12 @@
     {# Graphique #}
     {% if stats_auto.graphique_dates %}
     <div class="card mb-4">
-        <div class="card-header"><i class="bi bi-graph-up me-2"></i>Courbe de croissance</div>
+        <div class="card-header"><i class="bi bi-graph-up me-2"></i>Croissance de la culture</div>
         <div class="card-body">
-            <canvas id="chart-desktop" height="280"></canvas>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">
+                Chaque barre = une visite terrain. Plus la barre est haute, plus le plant a grandi. La couleur indique l'état de santé.
+            </p>
+            <canvas id="chart-desktop" height="300"></canvas>
         </div>
     </div>
     {% endif %}
@@ -318,98 +326,97 @@
 <script>
 const dates = {{ chart_dates|safe }};
 const hauteurs = {{ chart_hauteurs|safe }};
-const densites = {{ chart_densites|safe }};
 const stades = {{ chart_stades|safe }};
+const etats = {{ chart_etats|safe }};
+
+// Couleurs par état de santé
+const etatColors = {
+    'excellent': '#15803d',
+    'bon': '#22c55e',
+    'moyen': '#f59e0b',
+    'faible': '#ef4444',
+    'mauvais': '#991b1b',
+};
+const etatLabels = {
+    'excellent': 'Excellent',
+    'bon': 'Bon',
+    'moyen': 'Moyen',
+    'faible': 'Faible',
+    'mauvais': 'Mauvais',
+};
+
+// Labels combinés : stade + date
+const labels = stades.map((s, i) => {
+    const parts = s.split(' - ');
+    return parts.length > 1 ? parts[1] : s;
+});
+
+// Couleurs des barres selon l'état
+const barColors = etats.map(e => etatColors[e] || '#94a3b8');
 
 function createChart(canvasId) {
     const ctx = document.getElementById(canvasId);
     if (!ctx) return;
 
-    const datasets = [];
     const hasHauteur = hauteurs.some(h => h !== null);
-    const hasDensite = densites.some(d => d !== null);
-
-    if (hasHauteur) {
-        datasets.push({
-            label: 'Hauteur (cm)',
-            data: hauteurs,
-            borderColor: '#2e7d32',
-            backgroundColor: 'rgba(46, 125, 50, 0.08)',
-            fill: true,
-            tension: 0.4,
-            yAxisID: 'y',
-            pointRadius: 6,
-            pointHoverRadius: 9,
-            pointBackgroundColor: '#2e7d32',
-            pointBorderColor: 'white',
-            pointBorderWidth: 2,
-            borderWidth: 3,
-        });
-    }
-
-    if (hasDensite) {
-        datasets.push({
-            label: 'Densité (plants/ac)',
-            data: densites,
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.05)',
-            fill: false,
-            tension: 0.4,
-            yAxisID: 'y1',
-            pointRadius: 5,
-            pointHoverRadius: 8,
-            pointBackgroundColor: '#3b82f6',
-            pointBorderColor: 'white',
-            pointBorderWidth: 2,
-            borderWidth: 2,
-            borderDash: [6, 4],
-        });
-    }
+    if (!hasHauteur) return;
 
     new Chart(ctx, {
-        type: 'line',
-        data: { labels: dates, datasets: datasets },
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Hauteur du plant (cm)',
+                data: hauteurs,
+                backgroundColor: barColors.map(c => c + '40'),
+                borderColor: barColors,
+                borderWidth: 2,
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
         options: {
             responsive: true,
-            interaction: { mode: 'index', intersect: false },
             plugins: {
                 tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    titleFont: { size: 13, weight: 'bold' },
-                    bodyFont: { size: 12 },
-                    padding: 12,
-                    cornerRadius: 8,
+                    backgroundColor: 'rgba(0,0,0,0.85)',
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    padding: 14,
+                    cornerRadius: 10,
                     callbacks: {
                         title: function(items) {
                             const idx = items[0].dataIndex;
-                            return stades[idx] ? stades[idx] + ' (' + dates[idx] + ')' : dates[idx];
+                            return stades[idx];
+                        },
+                        label: function(item) {
+                            const idx = item.dataIndex;
+                            const lines = [];
+                            if (hauteurs[idx]) lines.push('Hauteur: ' + hauteurs[idx] + ' cm');
+                            lines.push('État: ' + (etatLabels[etats[idx]] || etats[idx]));
+                            lines.push('Date: ' + dates[idx]);
+                            return lines;
                         }
                     }
                 },
-                legend: {
-                    position: 'bottom',
-                    labels: { usePointStyle: true, padding: 16 }
-                }
+                legend: { display: false }
             },
             scales: {
                 x: {
                     grid: { display: false },
-                    ticks: { font: { size: 11 } }
+                    ticks: {
+                        font: { size: 11, weight: 'bold' },
+                        color: '#555',
+                    }
                 },
                 y: {
-                    type: 'linear',
-                    display: hasHauteur,
-                    position: 'left',
-                    title: { display: true, text: 'Hauteur (cm)', font: { size: 11 } },
                     beginAtZero: true,
-                    grid: { color: 'rgba(0,0,0,0.04)' },
-                },
-                y1: {
-                    type: 'linear',
-                    display: hasDensite,
-                    position: 'right',
-                    title: { display: true, text: 'Densité (plants/ac)', font: { size: 11 } },
-                    grid: { drawOnChartArea: false },
+                    title: {
+                        display: true,
+                        text: 'Hauteur (cm)',
+                        font: { size: 12 }
+                    },
+                    grid: { color: 'rgba(0,0,0,0.05)' },
                 }
             }
         }

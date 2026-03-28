@@ -1008,6 +1008,10 @@ body {
 .reco-card .reco-name { font-weight: 700; font-size: 0.9rem; color: var(--herbic-green-dark); }
 .reco-card .reco-detail { font-size: 0.78rem; color: #555; }
 
+/* Default: hide mobile on desktop */
+.mobile-only { display: none; }
+.desktop-only { display: block; }
+
 /* ============================================
    RESPONSIVE BREAKPOINTS
    ============================================ */

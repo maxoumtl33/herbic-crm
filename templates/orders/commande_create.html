@@ -178,9 +178,10 @@ function renderGrid() {
     });
 }
 
-function addProduct(p) {
+function addProduct(p, qty) {
     if (selectedProducts.some(sp => sp.id === p.id)) return;
-    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, categorie: p.categorie, type_categorie: p.type_categorie, quantite: 1 });
+    const q = qty ? Math.round(qty) : 1;
+    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, categorie: p.categorie, type_categorie: p.type_categorie, quantite: Math.max(1, q) });
     renderSelected();
     renderGrid();
 }
@@ -193,7 +194,7 @@ function removeProduct(id) {
 
 function updateQuantity(id, qty) {
     const p = selectedProducts.find(sp => sp.id === id);
-    if (p) p.quantite = Math.max(0.01, parseFloat(qty) || 1);
+    if (p) p.quantite = Math.max(1, Math.round(parseFloat(qty) || 1));
     updateTotals();
     syncFormset();
 }
@@ -223,7 +224,7 @@ function renderSelected() {
                 </div>
                 <div class="d-flex align-items-center gap-3">
                     <input type="number" class="form-control form-control-sm qty-input"
-                           value="${p.quantite}" min="0.01" step="1"
+                           value="${Math.round(p.quantite)}" min="1" step="1"
                            onchange="updateQuantity(${p.id}, this.value)"
                            oninput="updateQuantity(${p.id}, this.value)">
                     <div style="text-align:right;min-width:80px;">
@@ -298,13 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 items.forEach(item => {
                     const p = data.produits.find(pr => pr.id == item.id);
                     if (p && !selectedProducts.some(sp => sp.id === p.id)) {
-                        selectedProducts.push({
-                            id: p.id, nom: p.nom, code: p.code,
-                            prix: p.prix || parseFloat(item.prix) || 0,
-                            format: p.format, categorie: p.categorie,
-                            type_categorie: p.type_categorie,
-                            quantite: parseFloat(item.qty) || 1
-                        });
+                        addProduct(p, parseFloat(item.qty) || 1);
                     }
                 });
                 renderSelected();

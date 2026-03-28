@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% load prix_filters %}
+{% block title %}Nouvelle commande - Herbic CRM{% endblock %}
+{% block sidebar_commandes %}active{% endblock %}
+{% block topbar_title %}Nouvelle commande{% endblock %}
+{% block nav_commandes %}active{% endblock %}
+{% block content %}
+<div class="breadcrumb-subtle">
+    <a href="{% url 'orders:commande_list' %}">Commandes</a> / Nouvelle commande
+</div>
+
+<form method="post" id="order-form">
+    {% csrf_token %}
+
+    {# Infos commande #}
+    <div class="card mb-4">
+        <div class="card-header"><i class="bi bi-info-circle me-2"></i>Informations</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Client</label>
+                    {{ form.client }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Date de livraison prévue</label>
+                    {{ form.date_livraison_prevue }}
+                </div>
+            </div>
+            <div class="mt-3">
+                <label class="form-label">Notes</label>
+                {{ form.notes }}
+            </div>
+        </div>
+    </div>
+
+    {# Recherche et ajout de produits #}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-box-seam me-2"></i>Produits</span>
+        </div>
+        <div class="card-body">
+            {# Barre de recherche + filtres #}
+            <div class="row g-2 mb-3">
+                <div class="col-md-7">
+                    <div class="search-bar-live">
+                        <i class="bi bi-search search-icon-live"></i>
+                        <input type="text" id="product-search" class="form-control" placeholder="Rechercher un produit..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <select id="product-category" class="form-select">
+                        <option value="">Toutes les catégories</option>
+                        <option value="semence">Semences</option>
+                        <option value="pesticide">Pesticides</option>
+                        <option value="engrais_foliaire">Engrais foliaires</option>
+                        <option value="biostimulant">Biostimulants</option>
+                        <option value="additif_pulverisation">Additifs</option>
+                    </select>
+                </div>
+            </div>
+
+            {# Résultats de recherche #}
+            <div id="product-results" style="display:none;">
+                <div id="product-results-list" class="row g-2 mb-3" style="max-height:300px;overflow-y:auto;"></div>
+            </div>
+
+            {# Produits sélectionnés #}
+            <div id="selected-products">
+                <div style="font-weight:700;font-size:0.82rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">
+                    Produits dans la commande
+                </div>
+                <div id="selected-list"></div>
+                <p id="no-products" class="text-center py-3" style="color:var(--text-muted);">
+                    <i class="bi bi-arrow-up"></i> Recherchez et ajoutez des produits ci-dessus
+                </p>
+            </div>
+
+            {# Champs cachés pour le formset #}
+            <div id="formset-container" style="display:none;">
+                {{ formset.management_form }}
+                {% for f in formset %}
+                {{ f.produit }}{{ f.quantite }}{{ f.prix_unitaire }}{{ f.DELETE }}{{ f.id }}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# Résumé prix #}
+    <div class="card mb-4" id="price-summary" style="display:none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-1"><span>Sous-total HT</span><strong id="subtotal">$0</strong></div>
+            <div class="d-flex justify-content-between mb-1" style="font-size:0.85rem;color:var(--text-muted);"><span>TPS (5%)</span><span id="tps">$0</span></div>
+            <div class="d-flex justify-content-between mb-1" style="font-size:0.85rem;color:var(--text-muted);"><span>TVQ (9.975%)</span><span id="tvq">$0</span></div>
+            <div class="d-flex justify-content-between pt-2" style="border-top:2px solid var(--herbic-green-light);">
+                <strong style="font-size:1.15rem;">Total TTC</strong>
+                <strong style="font-size:1.15rem;color:var(--herbic-green);" id="total-ttc">$0</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-lg me-1"></i> Créer la commande</button>
+        <a href="{% url 'orders:commande_list' %}" class="btn btn-outline-primary btn-lg">Annuler</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const TAUX_TPS = 0.05;
+const TAUX_TVQ = 0.09975;
+let selectedProducts = [];
+let searchTimeout = null;
+
+const searchInput = document.getElementById('product-search');
+const categorySelect = document.getElementById('product-category');
+const resultsDiv = document.getElementById('product-results');
+const resultsList = document.getElementById('product-results-list');
+const selectedList = document.getElementById('selected-list');
+const noProducts = document.getElementById('no-products');
+const priceSummary = document.getElementById('price-summary');
+
+function formatPrice(val) {
+    if (val === Math.floor(val)) return '$' + Math.floor(val);
+    return '$' + val.toFixed(2);
+}
+
+function searchProducts() {
+    const q = searchInput.value;
+    const cat = categorySelect.value;
+    if (q.length < 1 && !cat) { resultsDiv.style.display = 'none'; return; }
+
+    fetch(`/api/produits/?q=${encodeURIComponent(q)}&categorie=${encodeURIComponent(cat)}`)
+        .then(r => r.json())
+        .then(data => {
+            resultsList.innerHTML = '';
+            if (data.produits.length === 0) {
+                resultsList.innerHTML = '<div class="col-12 text-center py-2" style="color:var(--text-muted);">Aucun produit trouvé</div>';
+            }
+            data.produits.forEach(p => {
+                const alreadyAdded = selectedProducts.some(sp => sp.id === p.id);
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4';
+                col.innerHTML = `
+                    <div class="product-result-card ${alreadyAdded ? 'already-added' : ''}" data-id="${p.id}" data-nom="${p.nom}" data-code="${p.code}" data-prix="${p.prix || 0}" data-format="${p.format}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div style="font-weight:700;font-size:0.88rem;">${p.nom}</div>
+                                <div style="font-size:0.75rem;color:var(--text-muted);">${p.code} · ${p.format}</div>
+                                <span class="badge bg-secondary" style="font-size:0.65rem;margin-top:2px;">${p.categorie}</span>
+                            </div>
+                            <div style="text-align:right;">
+                                ${p.prix ? '<div style="font-weight:700;color:var(--herbic-green);">$' + p.prix + '</div>' : ''}
+                                ${alreadyAdded ? '<i class="bi bi-check-circle-fill text-success"></i>' : '<i class="bi bi-plus-circle" style="font-size:1.2rem;color:var(--herbic-green);cursor:pointer;"></i>'}
+                            </div>
+                        </div>
+                    </div>`;
+                if (!alreadyAdded) {
+                    col.querySelector('.product-result-card').addEventListener('click', () => addProduct(p));
+                }
+                resultsList.appendChild(col);
+            });
+            resultsDiv.style.display = 'block';
+        });
+}
+
+function addProduct(p) {
+    if (selectedProducts.some(sp => sp.id === p.id)) return;
+    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, quantite: 1 });
+    renderSelected();
+    searchProducts();
+}
+
+function removeProduct(id) {
+    selectedProducts = selectedProducts.filter(p => p.id !== id);
+    renderSelected();
+    searchProducts();
+}
+
+function updateQuantity(id, qty) {
+    const p = selectedProducts.find(sp => sp.id === id);
+    if (p) { p.quantite = Math.max(0.01, parseFloat(qty) || 1); }
+    updateTotals();
+}
+
+function renderSelected() {
+    selectedList.innerHTML = '';
+    noProducts.style.display = selectedProducts.length === 0 ? 'block' : 'none';
+    priceSummary.style.display = selectedProducts.length > 0 ? 'block' : 'none';
+
+    selectedProducts.forEach((p, i) => {
+        const subtotal = p.prix * p.quantite;
+        const div = document.createElement('div');
+        div.className = 'selected-product-row';
+        div.innerHTML = `
+            <div class="d-flex align-items-center gap-3">
+                <button type="button" class="btn-remove-product" onclick="removeProduct(${p.id})"><i class="bi bi-x-lg"></i></button>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:0.9rem;">${p.nom}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);">${p.code} · ${p.format}</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="number" class="form-control form-control-sm qty-input" value="${p.quantite}" min="0.01" step="1" onchange="updateQuantity(${p.id}, this.value)" oninput="updateQuantity(${p.id}, this.value)">
+                    <div style="text-align:right;min-width:70px;">
+                        <div style="font-size:0.78rem;color:var(--text-muted);">${p.prix ? '$'+p.prix+'/u' : ''}</div>
+                        <div style="font-weight:700;">${subtotal > 0 ? formatPrice(subtotal) : ''}</div>
+                    </div>
+                </div>
+            </div>`;
+        selectedList.appendChild(div);
+    });
+    updateTotals();
+    syncFormset();
+}
+
+function updateTotals() {
+    let ht = 0;
+    selectedProducts.forEach(p => { ht += p.prix * p.quantite; });
+    const tps = ht * TAUX_TPS;
+    const tvq = ht * TAUX_TVQ;
+    const ttc = ht + tps + tvq;
+    document.getElementById('subtotal').textContent = formatPrice(ht);
+    document.getElementById('tps').textContent = formatPrice(tps);
+    document.getElementById('tvq').textContent = formatPrice(tvq);
+    document.getElementById('total-ttc').textContent = formatPrice(ttc);
+}
+
+function syncFormset() {
+    // Met à jour les champs cachés du formset Django
+    const container = document.getElementById('formset-container');
+    const totalForms = container.querySelector('[name$="TOTAL_FORMS"]');
+    const maxForms = selectedProducts.length + 5;
+    totalForms.value = selectedProducts.length;
+
+    // Supprimer les anciens champs
+    container.querySelectorAll('.dynamic-field').forEach(el => el.remove());
+
+    selectedProducts.forEach((p, i) => {
+        const prefix = `lignes-${i}`;
+        const fields = [
+            `<input type="hidden" name="${prefix}-produit" value="${p.id}" class="dynamic-field">`,
+            `<input type="hidden" name="${prefix}-quantite" value="${p.quantite}" class="dynamic-field">`,
+            `<input type="hidden" name="${prefix}-prix_unitaire" value="${p.prix}" class="dynamic-field">`,
+            `<input type="hidden" name="${prefix}-id" value="" class="dynamic-field">`,
+        ];
+        container.insertAdjacentHTML('beforeend', fields.join(''));
+    });
+}
+
+// Events
+searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(searchProducts, 200);
+});
+categorySelect.addEventListener('change', searchProducts);
+
+// Charger tous les produits au départ
+document.addEventListener('DOMContentLoaded', () => {
+    searchProducts();
+    // Charger les produits depuis les recommandations si on vient de la fiche client
+    const recoItems = sessionStorage.getItem('recoItems');
+    if (recoItems && new URLSearchParams(window.location.search).get('from_reco')) {
+        const items = JSON.parse(recoItems);
+        sessionStorage.removeItem('recoItems');
+        // Charger les détails des produits via l'API
+        items.forEach(item => {
+            fetch(`/api/produits/?q=&categorie=`)
+                .then(r => r.json())
+                .then(data => {
+                    const p = data.produits.find(pr => pr.id == item.id);
+                    if (p && !selectedProducts.some(sp => sp.id === p.id)) {
+                        selectedProducts.push({
+                            id: p.id, nom: p.nom, code: p.code,
+                            prix: p.prix || parseFloat(item.prix) || 0,
+                            format: p.format,
+                            quantite: parseFloat(item.qty) || 1
+                        });
+                        renderSelected();
+                    }
+                });
+        });
+    }
+});
+</script>
+{% endblock %}

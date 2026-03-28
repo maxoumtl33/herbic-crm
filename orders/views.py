@@ -68,7 +68,7 @@ def commande_create(request):
         if client_pk:
             form.fields['client'].initial = client_pk
 
-    return render(request, 'orders/commande_form.html', {
+    return render(request, 'orders/commande_create.html', {
         'form': form, 'formset': formset, 'title': 'Nouvelle commande',
     })
 

@@ -39,7 +39,10 @@ def calculer_quantite(dose_str, superficie):
                 break
         if nombre:
             dose = Decimal(nombre.replace(',', '.'))
-            return round(dose * Decimal(str(superficie)), 1)
+            result = (dose * Decimal(str(superficie))).quantize(Decimal('0.1'))
+            if result == result.to_integral_value():
+                return int(result)
+            return float(result)
     except (ValueError, ArithmeticError):
         pass
     return None

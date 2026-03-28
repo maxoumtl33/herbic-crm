@@ -92,6 +92,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
+# Taxes Québec
+TAUX_TPS = 5.0      # TPS fédérale
+TAUX_TVQ = 9.975    # TVQ Québec
+TAUX_TAXES_TOTAL = TAUX_TPS + TAUX_TVQ  # 14.975%
+
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:login'

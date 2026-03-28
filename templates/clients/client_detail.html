@@ -152,25 +152,39 @@
     </div>
     {% endfor %}
 
-    {# Recommandations intelligentes #}
+    {# Recommandations intelligentes - sélectionnables #}
     {% if recommandations %}
     <div class="info-section">
-        <div class="info-section-title"><i class="bi bi-lightbulb-fill"></i> Produits recommandés</div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="info-section-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0;"><i class="bi bi-lightbulb-fill"></i> Produits recommandés</div>
+            <a href="#" id="reco-order-btn-mobile" class="btn btn-sm btn-success" style="display:none;" onclick="createOrderFromRecos()">
+                <i class="bi bi-cart-plus"></i> Commander (<span id="reco-count-mobile">0</span>)
+            </a>
+        </div>
+        <div style="font-size:0.72rem;color:#999;margin-bottom:8px;">Cliquez pour sélectionner, puis "Commander"</div>
         {% for culture, recos in recommandations.items %}
         <div style="font-size:0.78rem;color:#888;font-weight:600;margin:8px 0 4px;">
             {{ culture.get_type_culture_display|upper }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres }} ac)
         </div>
         {% for reco in recos %}
-        <div class="reco-card {% if reco.deja_achete %}reco-bought{% endif %}" style="{% if reco.deja_achete %}opacity:0.6;{% endif %}">
+        <div class="reco-card reco-selectable {% if reco.deja_achete %}reco-bought{% endif %}"
+             data-produit-id="{{ reco.produit.pk }}"
+             data-produit-nom="{{ reco.produit.nom }}"
+             data-quantite="{{ reco.quantite_estimee|default:1 }}"
+             data-prix="{{ reco.produit.prix_unitaire|default:0 }}"
+             style="cursor:pointer;{% if reco.deja_achete %}opacity:0.6;{% endif %}">
             <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="reco-name">
-                        {{ reco.produit.nom }}
-                        {% if reco.deja_achete %}<i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:0.75rem;"></i>{% endif %}
-                    </div>
-                    <div class="reco-detail">
-                        {{ reco.produit.format_produit }}
-                        {% if reco.dose %} &middot; {{ reco.dose }}{% endif %}
+                <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-circle reco-check" style="font-size:1.1rem;color:#ccc;margin-top:2px;flex-shrink:0;"></i>
+                    <div>
+                        <div class="reco-name">
+                            {{ reco.produit.nom }}
+                            {% if reco.deja_achete %}<i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:0.75rem;"></i>{% endif %}
+                        </div>
+                        <div class="reco-detail">
+                            {{ reco.produit.format_produit }}
+                            {% if reco.dose %} &middot; {{ reco.dose }}{% endif %}
+                        </div>
                     </div>
                 </div>
                 {% if reco.quantite_estimee %}
@@ -181,7 +195,7 @@
                 {% endif %}
             </div>
             {% for tag, raison in reco.raisons %}
-            <div style="font-size:0.72rem;margin-top:2px;{% if tag == 'alerte' %}color:#ef4444;{% elif tag == 'saison' %}color:#8b5cf6;{% elif tag == 'complement' %}color:#06b6d4;{% else %}color:#888;{% endif %}">
+            <div style="font-size:0.72rem;margin-top:2px;margin-left:28px;{% if tag == 'alerte' %}color:#ef4444;{% elif tag == 'saison' %}color:#8b5cf6;{% elif tag == 'complement' %}color:#06b6d4;{% else %}color:#888;{% endif %}">
                 {% if tag == 'alerte' %}<i class="bi bi-exclamation-triangle-fill"></i>{% elif tag == 'saison' %}<i class="bi bi-calendar3"></i>{% elif tag == 'complement' %}<i class="bi bi-link-45deg"></i>{% else %}<i class="bi bi-info-circle"></i>{% endif %}
                 {{ raison }}
             </div>
@@ -362,4 +376,62 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sélection des recommandations pour commande
+const clientId = {{ client.pk }};
+let selectedRecos = new Set();
+
+document.querySelectorAll('.reco-selectable').forEach(card => {
+    card.addEventListener('click', function() {
+        const id = this.dataset.produitId;
+        const check = this.querySelector('.reco-check');
+        if (selectedRecos.has(id)) {
+            selectedRecos.delete(id);
+            check.className = 'bi bi-circle reco-check';
+            check.style.color = '#ccc';
+            this.style.borderLeft = '';
+        } else {
+            selectedRecos.add(id);
+            check.className = 'bi bi-check-circle-fill reco-check';
+            check.style.color = '#22c55e';
+            this.style.borderLeft = '3px solid #22c55e';
+        }
+        updateRecoButtons();
+    });
+});
+
+function updateRecoButtons() {
+    const count = selectedRecos.size;
+    // Mobile
+    const btnM = document.getElementById('reco-order-btn-mobile');
+    const countM = document.getElementById('reco-count-mobile');
+    if (btnM) { btnM.style.display = count > 0 ? 'inline-flex' : 'none'; }
+    if (countM) { countM.textContent = count; }
+    // Desktop
+    const btnD = document.getElementById('reco-order-btn-desktop');
+    const countD = document.getElementById('reco-count-desktop');
+    if (btnD) { btnD.style.display = count > 0 ? 'inline-flex' : 'none'; }
+    if (countD) { countD.textContent = count; }
+}
+
+function createOrderFromRecos() {
+    // Collecter les produits sélectionnés avec leurs quantités
+    const items = [];
+    document.querySelectorAll('.reco-selectable').forEach(card => {
+        if (selectedRecos.has(card.dataset.produitId)) {
+            items.push({
+                id: card.dataset.produitId,
+                qty: card.dataset.quantite || 1,
+                prix: card.dataset.prix || 0,
+            });
+        }
+    });
+    // Stocker en sessionStorage et rediriger vers la page commande
+    sessionStorage.setItem('recoItems', JSON.stringify(items));
+    window.location.href = `/commandes/creer/?client=${clientId}&from_reco=1`;
+}
+</script>
 {% endblock %}

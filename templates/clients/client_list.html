@@ -60,23 +60,21 @@
     </div>
     <div class="card mb-3">
         <div class="card-body">
-            <form method="get" class="row g-2">
-                <div class="col-md-10">{{ search_form.q }}</div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-herbic w-100"><i class="bi bi-search"></i> Rechercher</button>
-                </div>
-            </form>
+            <div class="search-bar-live">
+                <i class="bi bi-search search-icon-live"></i>
+                <input type="text" id="client-search-desktop" class="form-control" placeholder="Rechercher par nom, ferme, ville, code..." value="{{ search_form.q.value|default:'' }}" autocomplete="off">
+            </div>
         </div>
     </div>
     <div class="card">
-        <div class="card-body">
-            <table class="table table-hover">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
                 <thead>
                     <tr><th>Code</th><th>Ferme</th><th>Nom</th><th>Ville</th><th>Téléphone</th><th>Vendeur</th><th></th></tr>
                 </thead>
-                <tbody>
+                <tbody id="client-table-body">
                 {% for client in clients %}
-                <tr>
+                <tr class="client-row" data-search="{{ client.code|lower }} {{ client.nom_ferme|lower }} {{ client.prenom|lower }} {{ client.nom|lower }} {{ client.ville|lower }}">
                     <td>{{ client.code }}</td>
                     <td><strong>{{ client.nom_ferme }}</strong></td>
                     <td>{{ client.prenom }} {{ client.nom }}</td>
@@ -93,4 +91,33 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live filter client table
+const searchDesktop = document.getElementById('client-search-desktop');
+if (searchDesktop) {
+    searchDesktop.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        document.querySelectorAll('.client-row').forEach(row => {
+            const data = row.getAttribute('data-search');
+            row.style.display = (!q || data.includes(q)) ? '' : 'none';
+        });
+    });
+}
+
+// Mobile live search
+const searchMobile = document.querySelector('.search-bar-mobile input[name="q"]');
+if (searchMobile) {
+    searchMobile.closest('form').addEventListener('submit', function(e) { e.preventDefault(); });
+    searchMobile.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        document.querySelectorAll('.client-card-mobile').forEach(card => {
+            const text = card.textContent.toLowerCase();
+            card.style.display = (!q || text.includes(q)) ? '' : 'none';
+        });
+    });
+}
+</script>
 {% endblock %}

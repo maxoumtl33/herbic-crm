@@ -4,6 +4,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import redirect
 
+from orders.api_views import api_produits, api_clients
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('accounts:dashboard')),
@@ -12,6 +14,9 @@ urlpatterns = [
     path('produits/', include('products.urls')),
     path('commandes/', include('orders.urls')),
     path('suivi/', include('tracking.urls')),
+    # API JSON
+    path('api/produits/', api_produits, name='api_produits'),
+    path('api/clients/', api_clients, name='api_clients'),
 ]
 
 if settings.DEBUG:

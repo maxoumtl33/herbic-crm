@@ -24,7 +24,8 @@
         </div>
     </div>
 
-    {# Actions rapides - la partie la plus importante sur le terrain #}
+    {# Actions rapides #}
+    {% if user.is_vendeur or user.is_directeur %}
     <div class="quick-actions">
         {% if client.cellulaire %}
         <a href="tel:{{ client.cellulaire }}" class="quick-action-btn btn-call">
@@ -46,6 +47,7 @@
             Modifier
         </a>
     </div>
+    {% endif %}
 
     {# Infos client #}
     <div class="info-section">
@@ -130,12 +132,14 @@
                 <a href="{% url 'tracking:suivi_list' culture.pk %}" class="btn btn-sm btn-outline-success flex-fill">
                     <i class="bi bi-graph-up"></i> Suivi
                 </a>
+                {% if user.is_vendeur or user.is_directeur %}
                 <a href="{% url 'clients:culture_edit' culture.pk %}" class="btn btn-sm btn-outline-primary flex-fill">
                     <i class="bi bi-pencil"></i> Modifier
                 </a>
                 <a href="{% url 'clients:produit_arrosage_create' culture.pk %}" class="btn btn-sm btn-outline-secondary flex-fill">
                     <i class="bi bi-droplet"></i> Arrosage
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -143,36 +147,44 @@
     <div class="info-section text-center py-3">
         <i class="bi bi-flower2" style="font-size:2rem;color:#ccc;"></i>
         <p class="text-muted mt-1 mb-2">Aucune culture</p>
+        {% if user.is_vendeur or user.is_directeur %}
         <a href="{% url 'clients:culture_create' client.pk %}" class="btn btn-herbic btn-sm">
             <i class="bi bi-plus"></i> Ajouter une culture
         </a>
+        {% endif %}
     </div>
     {% endfor %}
 
-    {# Recommandations intelligentes - sélectionnables #}
+    {# Recommandations intelligentes #}
     {% if recommandations %}
     <div class="info-section">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div class="info-section-title" style="margin-bottom:0;border-bottom:none;padding-bottom:0;"><i class="bi bi-lightbulb-fill"></i> Produits recommandés</div>
+            {% if user.is_vendeur or user.is_directeur %}
             <a href="#" id="reco-order-btn-mobile" class="btn btn-sm btn-success" style="display:none;" onclick="createOrderFromRecos()">
                 <i class="bi bi-cart-plus"></i> Commander (<span id="reco-count-mobile">0</span>)
             </a>
+            {% endif %}
         </div>
+        {% if user.is_vendeur or user.is_directeur %}
         <div style="font-size:0.72rem;color:#999;margin-bottom:8px;">Cliquez pour sélectionner, puis "Commander"</div>
+        {% endif %}
         {% for culture, recos in recommandations.items %}
         <div style="font-size:0.78rem;color:#888;font-weight:600;margin:8px 0 4px;">
             {{ culture.get_type_culture_display|upper }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres|nombre }} ac)
         </div>
         {% for reco in recos %}
-        <div class="reco-card reco-selectable {% if reco.deja_achete %}reco-bought{% endif %}"
+        <div class="reco-card {% if user.is_vendeur or user.is_directeur %}reco-selectable{% endif %} {% if reco.deja_achete %}reco-bought{% endif %}"
              data-produit-id="{{ reco.produit.pk }}"
              data-produit-nom="{{ reco.produit.nom }}"
              data-quantite="{{ reco.quantite_estimee|default:1 }}"
              data-prix="{{ reco.produit.prix_unitaire|default:0 }}"
-             style="cursor:pointer;{% if reco.deja_achete %}opacity:0.6;{% endif %}">
+             style="{% if user.is_vendeur or user.is_directeur %}cursor:pointer;{% endif %}{% if reco.deja_achete %}opacity:0.6;{% endif %}">
             <div class="d-flex justify-content-between align-items-start">
                 <div class="d-flex align-items-start gap-2">
+                    {% if user.is_vendeur or user.is_directeur %}
                     <i class="bi bi-circle reco-check" style="font-size:1.1rem;color:#ccc;margin-top:2px;flex-shrink:0;"></i>
+                    {% endif %}
                     <div>
                         <div class="reco-name">
                             {{ reco.produit.nom }}

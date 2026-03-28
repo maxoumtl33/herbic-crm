@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load prix_filters %}
+{% block title %}Rapports vendeurs - Herbic CRM{% endblock %}
+{% block sidebar_rapports %}active{% endblock %}
+{% block topbar_title %}Rapports vendeurs{% endblock %}
+{% block content %}
+
+{# Filtres période #}
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
+            <div>
+                <label class="form-label" style="font-size:0.78rem;">Vendeur</label>
+                <select name="vendeur" class="form-select form-select-sm" style="min-width:150px;">
+                    <option value="">Tous les vendeurs</option>
+                    {% for v in vendeurs %}
+                    <option value="{{ v.pk }}" {% if vendeur_id == v.pk|stringformat:"d" %}selected{% endif %}>{{ v.get_full_name|default:v.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:0.78rem;">Période</label>
+                <select name="periode" class="form-select form-select-sm" onchange="toggleCustomDates(this)" style="min-width:120px;">
+                    <option value="jour" {% if periode == 'jour' %}selected{% endif %}>Aujourd'hui</option>
+                    <option value="semaine" {% if periode == 'semaine' %}selected{% endif %}>Cette semaine</option>
+                    <option value="mois" {% if periode == 'mois' %}selected{% endif %}>Ce mois</option>
+                    <option value="annee" {% if periode == 'annee' %}selected{% endif %}>Cette année</option>
+                    <option value="custom" {% if periode == 'custom' %}selected{% endif %}>Dates personnalisées</option>
+                </select>
+            </div>
+            <div id="custom-dates" style="{% if periode != 'custom' %}display:none;{% endif %}">
+                <div class="d-flex gap-2">
+                    <div>
+                        <label class="form-label" style="font-size:0.78rem;">Du</label>
+                        <input type="date" name="debut" class="form-control form-control-sm" value="{{ debut|date:'Y-m-d' }}">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:0.78rem;">Au</label>
+                        <input type="date" name="fin" class="form-control form-control-sm" value="{{ fin|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-herbic" style="height:31px;"><i class="bi bi-funnel me-1"></i> Filtrer</button>
+        </form>
+    </div>
+</div>
+
+{# KPIs globaux #}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left:4px solid var(--herbic-green);">
+            <div class="stat-card-value" style="color:var(--herbic-green);">{{ total_ca|prix }}</div>
+            <div class="stat-card-label">CA total HT</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-card-value">{{ total_commandes }}</div>
+            <div class="stat-card-label">Commandes</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left:4px solid #22c55e;">
+            <div class="stat-card-value" style="color:#22c55e;">{{ total_livrees }}</div>
+            <div class="stat-card-label">Livrées</div>
+        </div>
+    </div>
+</div>
+
+<p style="font-size:0.82rem;color:var(--text-muted);">
+    Période: <strong>{{ debut|date:"d/m/Y" }}</strong> au <strong>{{ fin|date:"d/m/Y" }}</strong>
+</p>
+
+{# Tableau vendeurs #}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Vendeur</th><th>Clients</th><th>Cultures</th><th>Commandes</th><th>Livrées</th><th>CA HT</th><th>Top client</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for s in all_stats %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:32px;height:32px;border-radius:50%;background:var(--herbic-green-50);color:var(--herbic-green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;">
+                            {{ s.vendeur.first_name.0|default:"?" }}{{ s.vendeur.last_name.0|default:"" }}
+                        </div>
+                        <strong>{{ s.vendeur.get_full_name|default:s.vendeur.username }}</strong>
+                    </div>
+                </td>
+                <td>{{ s.nb_clients }}</td>
+                <td>{{ s.nb_cultures }}</td>
+                <td>{{ s.nb_commandes }}</td>
+                <td style="color:#22c55e;font-weight:600;">{{ s.nb_livrees }}</td>
+                <td style="font-weight:700;color:var(--herbic-green);">{{ s.ca|prix }}</td>
+                <td style="font-size:0.85rem;">
+                    {% if s.top_clients %}{{ s.top_clients.0.0 }} <span style="color:var(--text-muted);">({{ s.top_clients.0.1|prix }})</span>{% else %}-{% endif %}
+                </td>
+                <td>
+                    <a href="?vendeur={{ s.vendeur.pk }}&periode={{ periode }}&debut={{ debut|date:'Y-m-d' }}&fin={{ fin|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary">Détails</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center py-4" style="color:var(--text-muted);">Aucun vendeur actif.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleCustomDates(sel) {
+    document.getElementById('custom-dates').style.display = sel.value === 'custom' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

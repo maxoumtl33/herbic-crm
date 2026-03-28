@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load prix_filters %}
+{% block title %}Rapport {{ stats.vendeur.get_full_name }} - Herbic CRM{% endblock %}
+{% block sidebar_rapports %}active{% endblock %}
+{% block topbar_title %}Rapport vendeur{% endblock %}
+{% block content %}
+
+{# Filtres période #}
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
+            <div>
+                <label class="form-label" style="font-size:0.78rem;">Vendeur</label>
+                <select name="vendeur" class="form-select form-select-sm" style="min-width:150px;">
+                    <option value="">Tous les vendeurs</option>
+                    {% for v in vendeurs %}
+                    <option value="{{ v.pk }}" {% if vendeur_id == v.pk|stringformat:"d" %}selected{% endif %}>{{ v.get_full_name|default:v.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label" style="font-size:0.78rem;">Période</label>
+                <select name="periode" class="form-select form-select-sm" onchange="toggleCustomDates(this)" style="min-width:120px;">
+                    <option value="jour" {% if periode == 'jour' %}selected{% endif %}>Aujourd'hui</option>
+                    <option value="semaine" {% if periode == 'semaine' %}selected{% endif %}>Cette semaine</option>
+                    <option value="mois" {% if periode == 'mois' %}selected{% endif %}>Ce mois</option>
+                    <option value="annee" {% if periode == 'annee' %}selected{% endif %}>Cette année</option>
+                    <option value="custom" {% if periode == 'custom' %}selected{% endif %}>Dates personnalisées</option>
+                </select>
+            </div>
+            <div id="custom-dates" style="{% if periode != 'custom' %}display:none;{% endif %}">
+                <div class="d-flex gap-2">
+                    <div>
+                        <label class="form-label" style="font-size:0.78rem;">Du</label>
+                        <input type="date" name="debut" class="form-control form-control-sm" value="{{ debut|date:'Y-m-d' }}">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:0.78rem;">Au</label>
+                        <input type="date" name="fin" class="form-control form-control-sm" value="{{ fin|date:'Y-m-d' }}">
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-sm btn-herbic" style="height:31px;"><i class="bi bi-funnel me-1"></i> Filtrer</button>
+        </form>
+    </div>
+</div>
+
+{# En-tête vendeur #}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div style="width:48px;height:48px;border-radius:50%;background:var(--herbic-green-50);color:var(--herbic-green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;">
+        {{ stats.vendeur.first_name.0|default:"?" }}{{ stats.vendeur.last_name.0|default:"" }}
+    </div>
+    <div>
+        <h4 style="font-weight:700;margin:0;">{{ stats.vendeur.get_full_name|default:stats.vendeur.username }}</h4>
+        <span style="color:var(--text-muted);">{{ debut|date:"d/m/Y" }} — {{ fin|date:"d/m/Y" }}</span>
+    </div>
+</div>
+
+{# KPIs #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+        <div class="stat-card" style="border-left:4px solid var(--herbic-green);">
+            <div class="stat-card-value" style="font-size:1.4rem;color:var(--herbic-green);">{{ stats.ca|prix }}</div>
+            <div class="stat-card-label">CA HT</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card">
+            <div class="stat-card-value">{{ stats.nb_commandes }}</div>
+            <div class="stat-card-label">Commandes</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card" style="border-left:4px solid #22c55e;">
+            <div class="stat-card-value" style="color:#22c55e;">{{ stats.nb_livrees }}</div>
+            <div class="stat-card-label">Livrées</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card">
+            <div class="stat-card-value">{{ stats.nb_clients }}</div>
+            <div class="stat-card-label">Clients</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card">
+            <div class="stat-card-value">{{ stats.nb_cultures }}</div>
+            <div class="stat-card-label">Cultures</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="stat-card">
+            <div class="stat-card-value">{% if stats.nb_commandes %}{{ stats.nb_livrees|default:0 }}{% else %}0{% endif %}</div>
+            <div class="stat-card-label">Taux conversion</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    {# Top clients #}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-trophy me-2"></i>Top clients par CA</div>
+            <div class="card-body p-0">
+                {% if stats.top_clients %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>#</th><th>Client</th><th>CA HT</th></tr></thead>
+                    <tbody>
+                    {% for nom, ca in stats.top_clients %}
+                    <tr>
+                        <td>
+                            {% if forloop.counter == 1 %}<span style="color:#f59e0b;font-size:1.1rem;">&#9733;</span>
+                            {% elif forloop.counter == 2 %}<span style="color:#94a3b8;font-size:1rem;">&#9733;</span>
+                            {% elif forloop.counter == 3 %}<span style="color:#b87333;font-size:0.9rem;">&#9733;</span>
+                            {% else %}{{ forloop.counter }}{% endif %}
+                        </td>
+                        <td style="font-weight:600;">{{ nom }}</td>
+                        <td style="font-weight:700;color:var(--herbic-green);">{{ ca|prix }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-3" style="color:var(--text-muted);">Aucune vente sur cette période</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Top produits #}
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-box-seam me-2"></i>Produits les plus vendus</div>
+            <div class="card-body p-0">
+                {% if stats.top_produits %}
+                <table class="table table-hover mb-0">
+                    <thead><tr><th>#</th><th>Produit</th><th>Quantité</th></tr></thead>
+                    <tbody>
+                    {% for nom, qty in stats.top_produits %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td style="font-weight:600;">{{ nom }}</td>
+                        <td><strong>{{ qty }}</strong> unités</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center py-3" style="color:var(--text-muted);">Aucun produit vendu</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Répartition par statut #}
+{% if stats.par_statut %}
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-pie-chart me-2"></i>Répartition par statut</div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-3">
+            {% for label, count in stats.par_statut.items %}
+            <div class="d-flex align-items-center gap-2">
+                <strong style="font-size:1.2rem;">{{ count }}</strong>
+                <span style="color:var(--text-secondary);">{{ label }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# Commandes détaillées #}
+<div class="card">
+    <div class="card-header"><i class="bi bi-list-ul me-2"></i>Commandes sur la période ({{ commandes.count }})</div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>No</th><th>Client</th><th>Statut</th><th>Date</th><th>Total HT</th></tr></thead>
+            <tbody>
+            {% for cmd in commandes %}
+            <tr>
+                <td><a href="{% url 'orders:commande_detail' cmd.pk %}">CMD-{{ cmd.pk|stringformat:"05d" }}</a></td>
+                <td style="font-weight:600;">{{ cmd.client.nom_ferme }}</td>
+                <td><span class="badge bg-{{ cmd.statut }}">{{ cmd.get_statut_display }}</span></td>
+                <td style="color:var(--text-muted);">{{ cmd.date_commande|date:"d/m/Y H:i" }}</td>
+                <td style="font-weight:600;">{{ cmd.total|prix }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center py-3" style="color:var(--text-muted);">Aucune commande.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<a href="{% url 'accounts:rapport_vendeurs' %}?periode={{ periode }}&debut={{ debut|date:'Y-m-d' }}&fin={{ fin|date:'Y-m-d' }}" class="btn btn-outline-primary mt-3">
+    <i class="bi bi-arrow-left me-1"></i> Retour tous vendeurs
+</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleCustomDates(sel) {
+    document.getElementById('custom-dates').style.display = sel.value === 'custom' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

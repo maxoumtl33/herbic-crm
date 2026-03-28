@@ -334,13 +334,19 @@
     <div class="empty-state"><i class="bi bi-flower2"></i><p>Aucune culture enregistrée.</p></div>
     {% endfor %}
 
-    {# Recommandations intelligentes #}
+    {# Recommandations intelligentes - sélectionnables desktop #}
     {% if recommandations %}
     <div class="card mt-4">
-        <div class="card-header" style="background:var(--herbic-green-50);color:var(--herbic-green-dark);">
-            <i class="bi bi-lightbulb-fill me-2"></i>Produits recommandés
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:var(--herbic-green-50);color:var(--herbic-green-dark);">
+            <span><i class="bi bi-lightbulb-fill me-2"></i>Produits recommandés</span>
+            <a href="#" id="reco-order-btn-desktop" class="btn btn-sm btn-success" style="display:none;" onclick="createOrderFromRecos()">
+                <i class="bi bi-cart-plus"></i> Commander (<span id="reco-count-desktop">0</span>)
+            </a>
         </div>
         <div class="card-body">
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:16px;">
+                <i class="bi bi-hand-index"></i> Cliquez sur les produits à ajouter à la commande, puis "Commander"
+            </p>
             {% for culture, recos in recommandations.items %}
             <h6 style="font-weight:700;font-size:0.88rem;color:var(--text-secondary);margin-top:{% if not forloop.first %}20px{% else %}0{% endif %};margin-bottom:12px;">
                 {{ culture.get_type_culture_display }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres }} acres, {{ culture.annee }})
@@ -348,21 +354,29 @@
             <div class="row g-3 mb-2">
                 {% for reco in recos %}
                 <div class="col-xl-4 col-md-6">
-                    <div class="reco-card-desktop h-100" style="{% if reco.deja_achete %}opacity:0.55;{% endif %}">
+                    <div class="reco-card-desktop reco-selectable h-100"
+                         data-produit-id="{{ reco.produit.pk }}"
+                         data-produit-nom="{{ reco.produit.nom }}"
+                         data-quantite="{{ reco.quantite_estimee|default:1 }}"
+                         data-prix="{{ reco.produit.prix_unitaire|default:0 }}"
+                         style="cursor:pointer;transition:all 0.15s;{% if reco.deja_achete %}opacity:0.55;{% endif %}">
                         <div class="d-flex justify-content-between align-items-start">
-                            <strong>
-                                {{ reco.produit.nom }}
-                                {% if reco.deja_achete %}<i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:0.7rem;"></i>{% endif %}
-                            </strong>
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-circle reco-check" style="font-size:1.1rem;color:#ccc;margin-top:1px;flex-shrink:0;"></i>
+                                <strong>
+                                    {{ reco.produit.nom }}
+                                    {% if reco.deja_achete %}<i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:0.7rem;"></i>{% endif %}
+                                </strong>
+                            </div>
                             {% if reco.quantite_estimee %}
                             <span style="background:var(--herbic-green);color:white;border-radius:6px;padding:2px 8px;font-size:0.72rem;font-weight:700;white-space:nowrap;">
                                 {{ reco.quantite_estimee }} {{ reco.unite_label|default:"unités" }}
                             </span>
                             {% endif %}
                         </div>
-                        <small style="color:var(--text-muted);">{{ reco.produit.format_produit }}{% if reco.dose %} &middot; {{ reco.dose }}{% endif %}</small>
+                        <small style="color:var(--text-muted);margin-left:26px;display:block;">{{ reco.produit.format_produit }}{% if reco.dose %} &middot; {{ reco.dose }}{% endif %}</small>
                         {% for tag, raison in reco.raisons %}
-                        <div style="font-size:0.75rem;margin-top:3px;{% if tag == 'alerte' %}color:#ef4444;font-weight:600;{% elif tag == 'saison' %}color:#8b5cf6;{% elif tag == 'complement' %}color:#06b6d4;{% else %}color:var(--text-secondary);{% endif %}">
+                        <div style="font-size:0.75rem;margin-top:3px;margin-left:26px;{% if tag == 'alerte' %}color:#ef4444;font-weight:600;{% elif tag == 'saison' %}color:#8b5cf6;{% elif tag == 'complement' %}color:#06b6d4;{% else %}color:var(--text-secondary);{% endif %}">
                             {% if tag == 'alerte' %}<i class="bi bi-exclamation-triangle-fill"></i>{% elif tag == 'saison' %}<i class="bi bi-calendar3"></i>{% elif tag == 'complement' %}<i class="bi bi-link-45deg"></i>{% else %}<i class="bi bi-info-circle"></i>{% endif %}
                             {{ raison }}
                         </div>

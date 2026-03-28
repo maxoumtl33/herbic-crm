@@ -37,6 +37,9 @@
             </a>
             {% if user.is_directeur %}
             <div class="sidebar-section">Gestion produits</div>
+            <a href="{% url 'clients:type_culture_list' %}" class="sidebar-link {% block sidebar_types_culture %}{% endblock %}">
+                <i class="bi bi-flower2"></i> Types de culture
+            </a>
             <a href="{% url 'products:categorie_list' %}" class="sidebar-link {% block sidebar_categories %}{% endblock %}">
                 <i class="bi bi-tags-fill"></i> Catégories
             </a>

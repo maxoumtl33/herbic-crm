@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'herbic_crm.settings')
 django.setup()
 
 from accounts.models import User
-from clients.models import Client, Culture, ProduitArrosage
+from clients.models import Client, Culture, ProduitArrosage, TypeCulture
 from products.models import CategorieProduit, Produit, RecommandationProduit
 from orders.models import Commande, LigneCommande
 from tracking.models import SuiviPousse, StatistiqueCulture
@@ -110,7 +110,7 @@ recos = [
 for code, type_cult, prio, desc in recos:
     prod = Produit.objects.get(code=code)
     r, created = RecommandationProduit.objects.get_or_create(
-        produit=prod, type_culture=type_cult,
+        produit=prod, type_culture=TypeCulture.objects.get(code=type_cult),
         defaults={'priorite': prio, 'description': desc}
     )
     if created:
@@ -270,7 +270,7 @@ for cd in clients_data:
         for cult_data in cd['cultures']:
             culture = Culture.objects.create(
                 client=client,
-                type_culture=cult_data['type'],
+                type_culture=TypeCulture.objects.get(code=cult_data['type']),
                 nom_champ=cult_data['champ'],
                 superficie_acres=cult_data['acres'],
                 semence=cult_data['semence'],

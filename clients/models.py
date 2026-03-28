@@ -2,6 +2,19 @@ from django.db import models
 from django.conf import settings
 
 
+class TypeCulture(models.Model):
+    code = models.CharField(max_length=30, unique=True)
+    nom = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.nom
+
+    class Meta:
+        ordering = ['nom']
+        verbose_name = 'Type de culture'
+        verbose_name_plural = 'Types de culture'
+
+
 class Client(models.Model):
     code = models.CharField(max_length=50, unique=True)
     nom_ferme = models.CharField('Nom de la ferme', max_length=200)
@@ -42,18 +55,14 @@ class Client(models.Model):
 
 
 class Culture(models.Model):
-    class TypeCulture(models.TextChoices):
-        MAIS = 'mais', 'Maïs'
-        SOYA = 'soya', 'Soya'
-        BLE = 'ble', 'Blé'
-        ORGE = 'orge', 'Orge'
-        AVOINE = 'avoine', 'Avoine'
-        CANOLA = 'canola', 'Canola'
-        FOIN = 'foin', 'Foin'
-        AUTRE = 'autre', 'Autre'
-
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='cultures')
-    type_culture = models.CharField(max_length=20, choices=TypeCulture.choices)
+    type_culture = models.ForeignKey(
+        TypeCulture,
+        on_delete=models.PROTECT,
+        related_name='cultures',
+        verbose_name='Type de culture',
+        null=True,
+    )
     nom_champ = models.CharField('Nom du champ', max_length=100, blank=True)
     superficie_acres = models.DecimalField('Superficie (acres)', max_digits=10, decimal_places=2)
     semence = models.CharField('Semence utilisée', max_length=200, blank=True)
@@ -62,8 +71,11 @@ class Culture(models.Model):
     annee = models.IntegerField('Année')
     notes = models.TextField(blank=True)
 
+    def get_type_culture_display(self):
+        return str(self.type_culture) if self.type_culture else '-'
+
     def __str__(self):
-        return f"{self.client.nom_ferme} - {self.get_type_culture_display()} ({self.annee})"
+        return f"{self.client.nom_ferme} - {self.type_culture} ({self.annee})"
 
     class Meta:
         ordering = ['-annee', 'type_culture']

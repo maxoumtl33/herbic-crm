@@ -1,5 +1,5 @@
 from django import forms
-from .models import Client, Culture, ProduitArrosage
+from .models import Client, Culture, ProduitArrosage, TypeCulture
 
 
 class ClientForm(forms.ModelForm):
@@ -45,6 +45,17 @@ class ProduitArrosageForm(forms.ModelForm):
         self.fields['date_application'].widget = forms.DateInput(
             attrs={'class': 'form-control', 'type': 'date'}
         )
+
+
+class TypeCultureForm(forms.ModelForm):
+    class Meta:
+        model = TypeCulture
+        fields = ['code', 'nom']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
 
 
 class ClientSearchForm(forms.Form):

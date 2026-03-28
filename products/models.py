@@ -1,4 +1,5 @@
 from django.db import models
+from clients.models import TypeCulture
 
 
 class CategorieProduit(models.Model):
@@ -68,7 +69,13 @@ class RecommandationProduit(models.Model):
         TOUTE_SAISON = 'toute_saison', 'Toute la saison'
 
     produit = models.ForeignKey(Produit, on_delete=models.CASCADE, related_name='recommandations')
-    type_culture = models.CharField(max_length=20)
+    type_culture = models.ForeignKey(
+        TypeCulture,
+        on_delete=models.CASCADE,
+        related_name='recommandations',
+        verbose_name='Type de culture',
+        null=True,
+    )
     priorite = models.IntegerField(default=0, help_text='Plus élevé = recommandé en premier')
     description = models.TextField('Pourquoi recommander', blank=True)
     dose_par_acre = models.CharField(

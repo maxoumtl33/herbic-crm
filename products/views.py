@@ -5,7 +5,7 @@ from django.db.models import Q, Count
 from .models import Produit, CategorieProduit, RecommandationProduit
 from .forms import ProduitForm, CategorieForm, RecommandationForm
 from accounts.decorators import staff_required, directeur_required
-from clients.models import Culture
+from clients.models import TypeCulture
 
 
 @login_required
@@ -134,12 +134,12 @@ def categorie_delete(request, pk):
 @directeur_required
 def recommandation_list(request):
     type_culture = request.GET.get('culture', '')
-    recommandations = RecommandationProduit.objects.select_related('produit', 'produit__categorie').all()
+    recommandations = RecommandationProduit.objects.select_related('produit', 'produit__categorie', 'type_culture').all()
 
     if type_culture:
-        recommandations = recommandations.filter(type_culture=type_culture)
+        recommandations = recommandations.filter(type_culture_id=type_culture)
 
-    types_culture = Culture.TypeCulture.choices
+    types_culture = TypeCulture.objects.all()
     return render(request, 'products/recommandation_list.html', {
         'recommandations': recommandations,
         'types_culture': types_culture,
@@ -158,10 +158,7 @@ def recommandation_create(request):
     else:
         form = RecommandationForm()
         # Pré-remplir avec les choix de culture
-        form.fields['type_culture'].widget = __import__('django.forms', fromlist=['Select']).Select(
-            attrs={'class': 'form-control'},
-            choices=[('', '---')] + list(Culture.TypeCulture.choices),
-        )
+        form.fields['type_culture'].widget.attrs['class'] = 'form-control'
     return render(request, 'products/recommandation_form.html', {'form': form, 'title': 'Nouvelle recommandation'})
 
 
@@ -176,10 +173,7 @@ def recommandation_edit(request, pk):
             return redirect('products:recommandation_list')
     else:
         form = RecommandationForm(instance=reco)
-        form.fields['type_culture'].widget = __import__('django.forms', fromlist=['Select']).Select(
-            attrs={'class': 'form-control'},
-            choices=[('', '---')] + list(Culture.TypeCulture.choices),
-        )
+        form.fields['type_culture'].widget.attrs['class'] = 'form-control'
     return render(request, 'products/recommandation_form.html', {'form': form, 'title': 'Modifier la recommandation'})
 
 

@@ -9,6 +9,7 @@ django.setup()
 
 from accounts.models import User
 from products.models import CategorieProduit
+from clients.models import TypeCulture
 
 # Créer superuser/directeur
 if not User.objects.filter(username='admin').exists():
@@ -75,6 +76,22 @@ for nom, type_cat in categories:
     )
     if created:
         print(f"Catégorie '{nom}' créée")
+
+# Créer les types de culture
+types_culture = [
+    ('mais', 'Maïs'),
+    ('soya', 'Soya'),
+    ('ble', 'Blé'),
+    ('orge', 'Orge'),
+    ('avoine', 'Avoine'),
+    ('canola', 'Canola'),
+    ('foin', 'Foin'),
+    ('autre', 'Autre'),
+]
+for code, nom in types_culture:
+    obj, created = TypeCulture.objects.get_or_create(code=code, defaults={'nom': nom})
+    if created:
+        print(f"Type de culture '{nom}' créé")
 
 print("\nConfiguration initiale terminée!")
 print("Lancez le serveur avec: python3 manage.py runserver")

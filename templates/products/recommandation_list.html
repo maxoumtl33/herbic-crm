@@ -13,8 +13,8 @@
 {# Filtres par culture #}
 <div class="d-flex gap-2 mb-4 flex-wrap">
     <a href="{% url 'products:recommandation_list' %}" class="btn btn-sm {% if not culture_active %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">Toutes</a>
-    {% for val, label in types_culture %}
-    <a href="?culture={{ val }}" class="btn btn-sm {% if culture_active == val %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">{{ label }}</a>
+    {% for tc in types_culture %}
+    <a href="?culture={{ tc.pk }}" class="btn btn-sm {% if culture_active == tc.pk|stringformat:'d' %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">{{ tc.nom }}</a>
     {% endfor %}
 </div>
 
@@ -34,7 +34,7 @@
                 <td><span class="badge bg-secondary">{{ reco.produit.categorie }}</span></td>
                 <td>
                     <span class="badge" style="background:var(--herbic-green-50);color:var(--herbic-green-dark);">
-                        {{ reco.get_type_culture_display|default:reco.type_culture }}
+                        {{ reco.type_culture }}
                     </span>
                 </td>
                 <td>

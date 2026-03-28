@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from .models import Client, Culture, ProduitArrosage
-from .forms import ClientForm, CultureForm, ProduitArrosageForm, ClientSearchForm
-from accounts.decorators import staff_required, vendeur_or_directeur
+from .models import Client, Culture, ProduitArrosage, TypeCulture
+from .forms import ClientForm, CultureForm, ProduitArrosageForm, ClientSearchForm, TypeCultureForm
+from accounts.decorators import staff_required, vendeur_or_directeur, directeur_required
+from django.db.models import Count
 from products.engine import generer_recommandations
 
 
@@ -137,3 +138,51 @@ def produit_arrosage_create(request, culture_pk):
     return render(request, 'clients/produit_arrosage_form.html', {
         'form': form, 'culture': culture, 'title': "Ajouter un produit d'arrosage",
     })
+
+
+# === TYPES DE CULTURE (directeur) ===
+
+@directeur_required
+def type_culture_list(request):
+    types = TypeCulture.objects.annotate(nb_cultures=Count('cultures')).all()
+    return render(request, 'clients/type_culture_list.html', {'types': types})
+
+
+@directeur_required
+def type_culture_create(request):
+    if request.method == 'POST':
+        form = TypeCultureForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Type de culture créé.')
+            return redirect('clients:type_culture_list')
+    else:
+        form = TypeCultureForm()
+    return render(request, 'clients/type_culture_form.html', {'form': form, 'title': 'Nouveau type de culture'})
+
+
+@directeur_required
+def type_culture_edit(request, pk):
+    tc = get_object_or_404(TypeCulture, pk=pk)
+    if request.method == 'POST':
+        form = TypeCultureForm(request.POST, instance=tc)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Type de culture mis à jour.')
+            return redirect('clients:type_culture_list')
+    else:
+        form = TypeCultureForm(instance=tc)
+    return render(request, 'clients/type_culture_form.html', {'form': form, 'title': f'Modifier {tc.nom}'})
+
+
+@directeur_required
+def type_culture_delete(request, pk):
+    tc = get_object_or_404(TypeCulture, pk=pk)
+    if request.method == 'POST':
+        if tc.cultures.exists():
+            messages.error(request, 'Impossible: des cultures utilisent ce type.')
+        else:
+            nom = tc.nom
+            tc.delete()
+            messages.success(request, f'Type "{nom}" supprimé.')
+    return redirect('clients:type_culture_list')

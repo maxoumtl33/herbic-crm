@@ -77,7 +77,7 @@ def generer_recommandations(client):
 
     for culture in cultures:
         recos_brutes = RecommandationProduit.objects.filter(
-            type_culture=culture.type_culture
+            type_culture=culture.type_culture_id
         ).select_related('produit', 'produit__categorie', 'complementaire_de')
 
         if not recos_brutes:

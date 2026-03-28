@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Types de culture - Herbic CRM{% endblock %}
+{% block sidebar_types_culture %}active{% endblock %}
+{% block topbar_title %}Types de culture{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'clients:type_culture_create' %}" class="btn btn-sm btn-herbic"><i class="bi bi-plus-lg"></i> Nouveau type</a>
+{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>Code</th><th>Nom</th><th>Nb cultures</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for tc in types %}
+            <tr>
+                <td><code style="background:var(--herbic-green-50);color:var(--herbic-green-dark);padding:2px 8px;border-radius:4px;">{{ tc.code }}</code></td>
+                <td style="font-weight:600;">{{ tc.nom }}</td>
+                <td>{{ tc.nb_cultures }}</td>
+                <td>
+                    <div class="d-flex gap-1 justify-content-end">
+                        <a href="{% url 'clients:type_culture_edit' tc.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                        {% if tc.nb_cultures == 0 %}
+                        <form method="post" action="{% url 'clients:type_culture_delete' tc.pk %}" class="d-inline" onsubmit="return confirm('Supprimer ce type?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center py-4" style="color:var(--text-muted);">Aucun type de culture.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

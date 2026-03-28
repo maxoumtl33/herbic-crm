@@ -11,4 +11,9 @@ urlpatterns = [
     path('<int:client_pk>/culture/ajouter/', views.culture_create, name='culture_create'),
     path('culture/<int:pk>/modifier/', views.culture_edit, name='culture_edit'),
     path('culture/<int:culture_pk>/arrosage/ajouter/', views.produit_arrosage_create, name='produit_arrosage_create'),
+    # Types de culture (directeur)
+    path('types-culture/', views.type_culture_list, name='type_culture_list'),
+    path('types-culture/creer/', views.type_culture_create, name='type_culture_create'),
+    path('types-culture/<int:pk>/modifier/', views.type_culture_edit, name='type_culture_edit'),
+    path('types-culture/<int:pk>/supprimer/', views.type_culture_delete, name='type_culture_delete'),
 ]

@@ -7,6 +7,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'herbic_crm.settings')
 django.setup()
 
 from products.models import RecommandationProduit, Produit
+from clients.models import TypeCulture
 
 updates = {
     # (code_produit, type_culture): {champs à mettre à jour}
@@ -99,7 +100,7 @@ updated = 0
 for (code, culture), data in updates.items():
     try:
         produit = Produit.objects.get(code=code)
-        reco = RecommandationProduit.objects.get(produit=produit, type_culture=culture)
+        reco = RecommandationProduit.objects.get(produit=produit, type_culture__code=culture)
         for key, val in data.items():
             setattr(reco, key, val)
         reco.save()
@@ -112,7 +113,7 @@ for (code, culture), comp_code in complementaires.items():
     try:
         produit = Produit.objects.get(code=code)
         comp = Produit.objects.get(code=comp_code)
-        reco = RecommandationProduit.objects.get(produit=produit, type_culture=culture)
+        reco = RecommandationProduit.objects.get(produit=produit, type_culture__code=culture)
         reco.complementaire_de = comp
         reco.save()
         print(f"  Complémentaire: {produit.nom} <-> {comp.nom}")

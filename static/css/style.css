@@ -801,6 +801,71 @@ body {
     box-shadow: 0 4px 12px rgba(46,125,50,0.4); transition: transform 0.15s;
 }
 .bottom-nav-fab:active { transform: scale(0.92); color: white; }
+.bottom-nav-fab.open {
+    background: #ef4444;
+    transform: rotate(45deg);
+}
+
+/* FAB Menu */
+.fab-menu {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 1039;
+}
+.fab-menu.show { display: block; }
+
+.fab-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(2px);
+}
+
+.fab-menu-item {
+    position: fixed;
+    bottom: calc(var(--bottom-nav-height) + 16px + (var(--i) * 60px));
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    z-index: 1041;
+    opacity: 0;
+    animation: fabItemIn 0.2s ease forwards;
+    animation-delay: calc(var(--i) * 0.05s);
+}
+@keyframes fabItemIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.fab-menu-label {
+    background: white;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    white-space: nowrap;
+}
+
+.fab-menu-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
 
 .vendeur-mode .mb-mobile { margin-bottom: calc(var(--bottom-nav-height) + 16px); }
 

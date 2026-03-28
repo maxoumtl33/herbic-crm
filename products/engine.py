@@ -7,10 +7,10 @@ et génère des recommandations scorées avec justification.
 from datetime import date
 from decimal import Decimal
 from django.db.models import Q
-from .models import RecommandationProduit, Produit
+import math
+from .models import RecommandationProduit, Produit, CONVERSIONS
 
 
-# Mapping mois -> saison agronomique
 SAISON_PAR_MOIS = {
     1: 'pre_semis', 2: 'pre_semis', 3: 'pre_semis', 4: 'pre_semis',
     5: 'semis',
@@ -26,93 +26,47 @@ def get_saison_actuelle():
     return SAISON_PAR_MOIS.get(date.today().month, 'toute_saison')
 
 
-import re
-import math
-
-def _parse_nombre(s):
-    """Parse un nombre dans une string, supporte '80 000', '1.67', '0.315'."""
-    # Enlever espaces dans les nombres: "80 000" -> "80000"
-    s = re.sub(r'(\d)\s+(\d)', r'\1\2', s.strip())
-    m = re.search(r'(\d+(?:[.,]\d+)?)', s)
-    if m:
-        return Decimal(m.group(1).replace(',', '.'))
-    return None
-
-
-def _parse_format_contenance(format_str):
+def calculer_quantite(reco, superficie):
     """
-    Extrait la contenance d'un format produit.
-    'Bidon 10 L' -> (10, 'L')
-    'Sac 80 000 grains' -> (80000, 'grains')
-    'Sac 25 kg' -> (25, 'kg')
+    Calcule le nombre d'unités à commander à partir des champs structurés.
+
+    reco: RecommandationProduit (avec dose_valeur, dose_unite)
+    superficie: Decimal (acres)
+
+    Utilise produit.contenance_valeur et produit.contenance_unite
+    pour convertir la quantité brute en nombre d'unités (sacs, bidons).
     """
-    if not format_str:
-        return None, None
-    s = re.sub(r'(\d)\s+(\d)', r'\1\2', format_str)
-    m = re.search(r'(\d+(?:[.,]\d+)?)\s*(L|mL|kg|lb|grains?)', s, re.IGNORECASE)
-    if m:
-        val = Decimal(m.group(1).replace(',', '.'))
-        unite = m.group(2).lower().rstrip('s')
-        return val, unite
-    return None, None
+    if not reco.dose_valeur or not superficie:
+        return None
 
-
-def calculer_quantite(dose_str, superficie, format_produit=''):
-    """
-    Calcule le nombre d'unités à commander.
-
-    Exemples:
-      dose='1.67 L/acre', superficie=150, format='Bidon 10 L'
-        -> 1.67 * 150 = 250.5 L / 10 L = 26 bidons
-
-      dose='315 mL/acre', superficie=150, format='Bidon 5 L'
-        -> 315 * 150 = 47250 mL = 47.25 L / 5 L = 10 bidons
-
-      dose='80 000 grains/acre', superficie=150, format='Sac 80 000 grains'
-        -> 80000 * 150 = 12M grains / 80000 = 150 sacs
-    """
-    if not dose_str or not superficie:
+    produit = reco.produit
+    if not produit.contenance_valeur:
         return None
 
     try:
-        # Parser la dose: "1.67 L/acre" -> (1.67, 'L')
-        dose_clean = re.sub(r'(\d)\s+(\d)', r'\1\2', dose_str)
-        dose_match = re.search(r'(\d+(?:[.,]\d+)?)\s*(L|mL|kg|lb|grains?)', dose_clean, re.IGNORECASE)
-        if not dose_match:
-            return None
+        dose = Decimal(str(reco.dose_valeur))
+        sup = Decimal(str(superficie))
+        total_brut = dose * sup  # ex: 1.67 L/acre * 150 acres = 250.5 L
 
-        dose_val = Decimal(dose_match.group(1).replace(',', '.'))
-        dose_unite = dose_match.group(2).lower().rstrip('s')
+        # Conversion d'unité si dose_unite != contenance_unite
+        dose_u = reco.dose_unite
+        cont_u = produit.contenance_unite
+        facteur = CONVERSIONS.get((dose_u, cont_u))
 
-        # Quantité brute totale
-        total_brut = dose_val * Decimal(str(superficie))
+        if facteur is None:
+            # Mêmes unités ou pas de conversion connue
+            if dose_u == cont_u:
+                facteur = 1
+            else:
+                return None  # Unités incompatibles
 
-        # Parser le format du produit pour calculer en unités
-        format_val, format_unite = _parse_format_contenance(format_produit)
+        total_converti = total_brut * Decimal(str(facteur))
+        nb_unites = math.ceil(float(total_converti / Decimal(str(produit.contenance_valeur))))
 
-        if format_val and format_unite:
-            # Convertir mL -> L si nécessaire
-            if dose_unite == 'ml' and format_unite == 'l':
-                total_brut = total_brut / 1000
-            elif dose_unite == 'l' and format_unite == 'ml':
-                total_brut = total_brut * 1000
-            # lb -> kg
-            elif dose_unite == 'lb' and format_unite == 'kg':
-                total_brut = total_brut * Decimal('0.4536')
+        return max(1, nb_unites)
 
-            # Nombre d'unités (arrondi au supérieur)
-            nb_unites = math.ceil(float(total_brut / format_val))
-            return nb_unites
-        else:
-            # Pas de format parsable, retourner la quantité brute arrondie
-            result = total_brut.quantize(Decimal('0.1'))
-            if result == result.to_integral_value():
-                return int(result)
-            return float(result)
-
-    except (ValueError, ArithmeticError, TypeError):
-        pass
-    return None
+    except (ValueError, ArithmeticError, TypeError, ZeroDivisionError):
+        return None
 
 
 def generer_recommandations(client):
@@ -231,12 +185,7 @@ def generer_recommandations(client):
                         f'Complémentaire de {reco.complementaire_de.nom}'))
 
             # --- CRITÈRE 8: Superficie → quantité estimée ---
-            quantite_estimee = None
-            if reco.dose_par_acre and culture.superficie_acres:
-                quantite_estimee = calculer_quantite(
-                    reco.dose_par_acre, culture.superficie_acres,
-                    produit.format_produit,
-                )
+            quantite_estimee = calculer_quantite(reco, culture.superficie_acres)
 
             # Raison de base (description de la reco)
             if reco.description:
@@ -263,7 +212,7 @@ def generer_recommandations(client):
                 'raisons': raisons,
                 'quantite_estimee': quantite_estimee,
                 'unite_label': unite_label,
-                'dose': reco.dose_par_acre,
+                'dose': reco.dose_affichage or (f'{reco.dose_valeur} {reco.dose_unite}/acre' if reco.dose_valeur else ''),
                 'deja_achete': produit.pk in produits_commandes,
                 'deja_applique': deja_applique,
                 'priorite_originale': reco.priorite,

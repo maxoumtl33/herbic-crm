@@ -34,44 +34,45 @@ cat_bio = CategorieProduit.objects.get(nom='Biostimulants')
 cat_additif = CategorieProduit.objects.get(nom='Additifs de pulvérisation')
 
 produits_data = [
+    # (code, nom, categorie, format_affichage, prix, cultures, contenant, contenance, unite_contenance)
     # Semences maïs
-    ('SEM-M001', 'Maïs Pioneer P9185AM', cat_sem_mais, 'Sac 80 000 grains', 320.00, 'maïs'),
-    ('SEM-M002', 'Maïs Dekalb DKC35-88', cat_sem_mais, 'Sac 80 000 grains', 305.00, 'maïs'),
-    ('SEM-M003', 'Maïs Elite E49A17', cat_sem_mais, 'Sac 80 000 grains', 290.00, 'maïs'),
+    ('SEM-M001', 'Maïs Pioneer P9185AM', cat_sem_mais, 'Sac 80 000 grains', 320.00, 'maïs', 'sac', 80000, 'grains'),
+    ('SEM-M002', 'Maïs Dekalb DKC35-88', cat_sem_mais, 'Sac 80 000 grains', 305.00, 'maïs', 'sac', 80000, 'grains'),
+    ('SEM-M003', 'Maïs Elite E49A17', cat_sem_mais, 'Sac 80 000 grains', 290.00, 'maïs', 'sac', 80000, 'grains'),
     # Semences soya
-    ('SEM-S001', 'Soya Prograin PRO 24X10', cat_sem_soya, 'Sac 140 000 grains', 85.00, 'soya'),
-    ('SEM-S002', 'Soya Sevita SV5001GT', cat_sem_soya, 'Sac 140 000 grains', 78.00, 'soya'),
-    ('SEM-S003', 'Soya Pioneer P09A78X', cat_sem_soya, 'Sac 140 000 grains', 92.00, 'soya'),
+    ('SEM-S001', 'Soya Prograin PRO 24X10', cat_sem_soya, 'Sac 140 000 grains', 85.00, 'soya', 'sac', 140000, 'grains'),
+    ('SEM-S002', 'Soya Sevita SV5001GT', cat_sem_soya, 'Sac 140 000 grains', 78.00, 'soya', 'sac', 140000, 'grains'),
+    ('SEM-S003', 'Soya Pioneer P09A78X', cat_sem_soya, 'Sac 140 000 grains', 92.00, 'soya', 'sac', 140000, 'grains'),
     # Semences blé
-    ('SEM-B001', 'Blé Bolles (blé de printemps)', cat_sem_ble, 'Sac 25 kg', 42.00, 'blé'),
-    ('SEM-B002', 'Blé Cardale (blé d\'automne)', cat_sem_ble, 'Sac 25 kg', 45.00, 'blé'),
+    ('SEM-B001', 'Blé Bolles (blé de printemps)', cat_sem_ble, 'Sac 25 kg', 42.00, 'blé', 'sac', 25, 'kg'),
+    ('SEM-B002', 'Blé Cardale (blé d\'automne)', cat_sem_ble, 'Sac 25 kg', 45.00, 'blé', 'sac', 25, 'kg'),
     # Herbicides
-    ('HERB-001', 'Roundup WeatherMAX', cat_herb, 'Bidon 10 L', 125.00, 'maïs,soya'),
-    ('HERB-002', 'Engenia (Dicamba)', cat_herb, 'Bidon 10 L', 210.00, 'soya'),
-    ('HERB-003', 'Callisto (Mésotrione)', cat_herb, 'Bidon 5 L', 185.00, 'maïs'),
-    ('HERB-004', 'Infinity FX', cat_herb, 'Bidon 10 L', 155.00, 'blé,orge'),
+    ('HERB-001', 'Roundup WeatherMAX', cat_herb, 'Bidon 10 L', 125.00, 'maïs,soya', 'bidon', 10, 'L'),
+    ('HERB-002', 'Engenia (Dicamba)', cat_herb, 'Bidon 10 L', 210.00, 'soya', 'bidon', 10, 'L'),
+    ('HERB-003', 'Callisto (Mésotrione)', cat_herb, 'Bidon 5 L', 185.00, 'maïs', 'bidon', 5, 'L'),
+    ('HERB-004', 'Infinity FX', cat_herb, 'Bidon 10 L', 155.00, 'blé,orge', 'bidon', 10, 'L'),
     # Insecticides
-    ('INSECT-001', 'Coragen (Chlorantraniliprole)', cat_insect, 'Bidon 3.78 L', 340.00, 'maïs,soya'),
-    ('INSECT-002', 'Matador 120EC', cat_insect, 'Bidon 4 L', 165.00, 'maïs,soya,blé'),
+    ('INSECT-001', 'Coragen (Chlorantraniliprole)', cat_insect, 'Bidon 3.78 L', 340.00, 'maïs,soya', 'bidon', 3.78, 'L'),
+    ('INSECT-002', 'Matador 120EC', cat_insect, 'Bidon 4 L', 165.00, 'maïs,soya,blé', 'bidon', 4, 'L'),
     # Fongicides
-    ('FONG-001', 'Prosaro XTR', cat_fong, 'Bidon 5 L', 275.00, 'blé,orge'),
-    ('FONG-002', 'Miravis Neo', cat_fong, 'Bidon 5 L', 310.00, 'maïs'),
-    ('FONG-003', 'Delaro Complete', cat_fong, 'Bidon 5 L', 255.00, 'soya'),
+    ('FONG-001', 'Prosaro XTR', cat_fong, 'Bidon 5 L', 275.00, 'blé,orge', 'bidon', 5, 'L'),
+    ('FONG-002', 'Miravis Neo', cat_fong, 'Bidon 5 L', 310.00, 'maïs', 'bidon', 5, 'L'),
+    ('FONG-003', 'Delaro Complete', cat_fong, 'Bidon 5 L', 255.00, 'soya', 'bidon', 5, 'L'),
     # Engrais foliaires
-    ('ENG-001', 'Foliaire N-P-K 20-20-20', cat_engrais, 'Sac 10 kg', 38.00, 'maïs,soya,blé'),
-    ('ENG-002', 'Foliaire Calcium-Bore', cat_engrais, 'Bidon 10 L', 52.00, 'soya'),
-    ('ENG-003', 'Manganèse foliaire 8%', cat_engrais, 'Bidon 10 L', 45.00, 'soya,blé'),
+    ('ENG-001', 'Foliaire N-P-K 20-20-20', cat_engrais, 'Sac 10 kg', 38.00, 'maïs,soya,blé', 'sac', 10, 'kg'),
+    ('ENG-002', 'Foliaire Calcium-Bore', cat_engrais, 'Bidon 10 L', 52.00, 'soya', 'bidon', 10, 'L'),
+    ('ENG-003', 'Manganèse foliaire 8%', cat_engrais, 'Bidon 10 L', 45.00, 'soya,blé', 'bidon', 10, 'L'),
     # Biostimulants
-    ('BIO-001', 'Stimulateur racinaire RhizoMax', cat_bio, 'Bidon 5 L', 120.00, 'maïs,soya'),
-    ('BIO-002', 'Extrait d\'algues marines AgroKelp', cat_bio, 'Bidon 10 L', 95.00, 'maïs,soya,blé'),
-    ('BIO-003', 'Acides humiques HumiGrow', cat_bio, 'Sac 20 kg', 75.00, 'maïs,soya,blé'),
+    ('BIO-001', 'Stimulateur racinaire RhizoMax', cat_bio, 'Bidon 5 L', 120.00, 'maïs,soya', 'bidon', 5, 'L'),
+    ('BIO-002', 'Extrait d\'algues marines AgroKelp', cat_bio, 'Bidon 10 L', 95.00, 'maïs,soya,blé', 'bidon', 10, 'L'),
+    ('BIO-003', 'Acides humiques HumiGrow', cat_bio, 'Sac 20 kg', 75.00, 'maïs,soya,blé', 'sac', 20, 'kg'),
     # Additifs pulvérisation
-    ('ADD-001', 'Surfactant AgriSpread', cat_additif, 'Bidon 10 L', 55.00, ''),
-    ('ADD-002', 'Anti-dérive DriftGuard', cat_additif, 'Bidon 10 L', 68.00, ''),
-    ('ADD-003', 'Conditionneur d\'eau AquaFix', cat_additif, 'Bidon 20 L', 42.00, ''),
+    ('ADD-001', 'Surfactant AgriSpread', cat_additif, 'Bidon 10 L', 55.00, '', 'bidon', 10, 'L'),
+    ('ADD-002', 'Anti-dérive DriftGuard', cat_additif, 'Bidon 10 L', 68.00, '', 'bidon', 10, 'L'),
+    ('ADD-003', 'Conditionneur d\'eau AquaFix', cat_additif, 'Bidon 20 L', 42.00, '', 'bidon', 20, 'L'),
 ]
 
-for code, nom, cat, fmt, prix, cultures in produits_data:
+for code, nom, cat, fmt, prix, cultures, contenant, contenance, unite in produits_data:
     p, created = Produit.objects.get_or_create(
         code=code,
         defaults={
@@ -81,6 +82,9 @@ for code, nom, cat, fmt, prix, cultures in produits_data:
             'prix_unitaire': prix,
             'culture_recommandee': cultures,
             'en_stock': True,
+            'contenant': contenant,
+            'contenance_valeur': contenance,
+            'contenance_unite': unite,
         }
     )
     if created:

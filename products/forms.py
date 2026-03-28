@@ -7,6 +7,7 @@ class ProduitForm(forms.ModelForm):
         model = Produit
         fields = [
             'code', 'nom', 'description', 'categorie', 'format_produit',
+            'contenant', 'contenance_valeur', 'contenance_unite',
             'prix_unitaire', 'en_stock', 'culture_recommandee', 'image',
         ]
 
@@ -35,8 +36,8 @@ class RecommandationForm(forms.ModelForm):
         model = RecommandationProduit
         fields = [
             'produit', 'type_culture', 'priorite', 'saison',
-            'dose_par_acre', 'complementaire_de', 'probleme_cible',
-            'description',
+            'dose_valeur', 'dose_unite', 'dose_affichage',
+            'complementaire_de', 'probleme_cible', 'description',
         ]
 
     def __init__(self, *args, **kwargs):

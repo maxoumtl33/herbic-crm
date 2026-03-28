@@ -3,13 +3,14 @@
 {% block title %}Statistiques - Herbic CRM{% endblock %}
 {% block sidebar_stats %}active{% endblock %}
 {% block topbar_title %}Statistiques {{ annee }}{% endblock %}
+{% block nav_produits %}active{% endblock %}
 {% block content %}
 
 {# KPIs globaux #}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="stat-card" style="border-left:4px solid var(--herbic-green);">
-            <div class="stat-card-value" style="color:var(--herbic-green);">{{ ca_total|prix }}</div>
+            <div class="stat-card-value" style="color:var(--herbic-green);font-size:1.3rem;">{{ ca_total|prix }}</div>
             <div class="stat-card-label">CA total HT {{ annee }}</div>
         </div>
     </div>
@@ -33,22 +34,84 @@
     </div>
 </div>
 
+{# Classement vendeurs #}
+{% if vendeur_stats %}
+<div class="card mb-4">
+    <div class="card-header"><i class="bi bi-trophy me-2"></i>Classement vendeurs {{ annee }}</div>
+
+    {# Desktop #}
+    <div class="card-body p-0 desktop-only">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>#</th><th>Vendeur</th><th>CA HT</th><th>Commandes</th><th>Clients</th><th>Cultures</th></tr></thead>
+            <tbody>
+            {% for s in vendeur_stats %}
+            <tr {% if s.vendeur == request.user %}style="background:var(--herbic-green-50);"{% endif %}>
+                <td>
+                    {% if forloop.counter == 1 %}<span style="color:#f59e0b;font-size:1.3rem;">&#9733;</span>
+                    {% elif forloop.counter == 2 %}<span style="color:#94a3b8;font-size:1.1rem;">&#9733;</span>
+                    {% elif forloop.counter == 3 %}<span style="color:#b87333;font-size:1rem;">&#9733;</span>
+                    {% else %}{{ forloop.counter }}{% endif %}
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:32px;height:32px;border-radius:50%;background:var(--herbic-green-50);color:var(--herbic-green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;">
+                            {{ s.vendeur.first_name.0|default:"?" }}{{ s.vendeur.last_name.0|default:"" }}
+                        </div>
+                        <strong>{{ s.vendeur.get_full_name|default:s.vendeur.username }}</strong>
+                        {% if s.vendeur == request.user %}<span class="badge bg-vendeur ms-1" style="font-size:0.6rem;">Vous</span>{% endif %}
+                    </div>
+                </td>
+                <td style="font-weight:700;color:var(--herbic-green);">{{ s.ca|prix }}</td>
+                <td>{{ s.nb_commandes }}</td>
+                <td>{{ s.nb_clients }}</td>
+                <td>{{ s.nb_cultures }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# Mobile #}
+    <div class="card-body p-0 mobile-only">
+        {% for s in vendeur_stats %}
+        <div class="d-flex align-items-center gap-3 px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}" style="{% if s.vendeur == request.user %}background:var(--herbic-green-50);{% endif %}">
+            <div style="width:28px;text-align:center;flex-shrink:0;">
+                {% if forloop.counter == 1 %}<span style="color:#f59e0b;font-size:1.2rem;">&#9733;</span>
+                {% elif forloop.counter == 2 %}<span style="color:#94a3b8;font-size:1rem;">&#9733;</span>
+                {% elif forloop.counter == 3 %}<span style="color:#b87333;">&#9733;</span>
+                {% else %}<span style="color:var(--text-muted);">{{ forloop.counter }}</span>{% endif %}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:0.9rem;">
+                    {{ s.vendeur.get_full_name|default:s.vendeur.username }}
+                    {% if s.vendeur == request.user %}<span class="badge bg-vendeur ms-1" style="font-size:0.55rem;">Vous</span>{% endif %}
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);">{{ s.nb_clients }} clients · {{ s.nb_commandes }} cmd · {{ s.nb_cultures }} cultures</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+                <div style="font-weight:800;color:var(--herbic-green);">{{ s.ca|prix }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <div class="row g-4 mb-4">
     {# Top produits par quantité #}
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header"><i class="bi bi-sort-down me-2"></i>Produits les plus vendus (quantité)</div>
+            <div class="card-header"><i class="bi bi-sort-down me-2"></i>Top produits (quantité)</div>
             <div class="card-body p-0">
-                <table class="table table-hover mb-0">
-                    <thead><tr><th>#</th><th>Produit</th><th>Catégorie</th><th>Qté</th><th>Commandes</th></tr></thead>
+                {# Desktop #}
+                <table class="table table-hover mb-0 desktop-only">
+                    <thead><tr><th>#</th><th>Produit</th><th>Catégorie</th><th>Qté</th><th>Cmd</th></tr></thead>
                     <tbody>
                     {% for p in top_produits_qty %}
                     <tr>
-                        <td>
-                            {% if forloop.counter <= 3 %}<span style="color:{% if forloop.counter == 1 %}#f59e0b{% elif forloop.counter == 2 %}#94a3b8{% else %}#b87333{% endif %};font-size:1.1rem;">&#9733;</span>{% else %}{{ forloop.counter }}{% endif %}
-                        </td>
+                        <td>{% if forloop.counter <= 3 %}<span style="color:{% if forloop.counter == 1 %}#f59e0b{% elif forloop.counter == 2 %}#94a3b8{% else %}#b87333{% endif %};font-size:1.1rem;">&#9733;</span>{% else %}{{ forloop.counter }}{% endif %}</td>
                         <td style="font-weight:600;">{{ p.produit.nom }}</td>
-                        <td><span class="badge bg-secondary" style="font-size:0.65rem;">{{ p.produit.categorie }}</span></td>
+                        <td><span class="badge bg-secondary" style="font-size:0.63rem;">{{ p.produit.categorie }}</span></td>
                         <td style="font-weight:700;">{{ p.quantite }}</td>
                         <td style="color:var(--text-muted);">{{ p.nb_commandes }}</td>
                     </tr>
@@ -57,6 +120,21 @@
                     {% endfor %}
                     </tbody>
                 </table>
+                {# Mobile #}
+                <div class="mobile-only">
+                    {% for p in top_produits_qty %}
+                    <div class="d-flex align-items-center gap-2 px-3 py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div style="width:24px;text-align:center;flex-shrink:0;">{% if forloop.counter <= 3 %}<span style="color:{% if forloop.counter == 1 %}#f59e0b{% elif forloop.counter == 2 %}#94a3b8{% else %}#b87333{% endif %};">&#9733;</span>{% else %}{{ forloop.counter }}{% endif %}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:0.85rem;">{{ p.produit.nom }}</div>
+                            <div style="font-size:0.7rem;color:var(--text-muted);">{{ p.produit.categorie }}</div>
+                        </div>
+                        <strong>{{ p.quantite }}</strong>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3" style="color:var(--text-muted);">Aucune vente</div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
@@ -64,16 +142,14 @@
     {# Top produits par CA #}
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header"><i class="bi bi-currency-dollar me-2"></i>Produits par chiffre d'affaires</div>
+            <div class="card-header"><i class="bi bi-currency-dollar me-2"></i>Top produits (CA)</div>
             <div class="card-body p-0">
-                <table class="table table-hover mb-0">
+                <table class="table table-hover mb-0 desktop-only">
                     <thead><tr><th>#</th><th>Produit</th><th>CA HT</th><th>Qté</th></tr></thead>
                     <tbody>
                     {% for p in top_produits_ca %}
                     <tr>
-                        <td>
-                            {% if forloop.counter <= 3 %}<span style="color:{% if forloop.counter == 1 %}#f59e0b{% elif forloop.counter == 2 %}#94a3b8{% else %}#b87333{% endif %};font-size:1.1rem;">&#9733;</span>{% else %}{{ forloop.counter }}{% endif %}
-                        </td>
+                        <td>{% if forloop.counter <= 3 %}<span style="color:{% if forloop.counter == 1 %}#f59e0b{% elif forloop.counter == 2 %}#94a3b8{% else %}#b87333{% endif %};font-size:1.1rem;">&#9733;</span>{% else %}{{ forloop.counter }}{% endif %}</td>
                         <td style="font-weight:600;">{{ p.produit.nom }}</td>
                         <td style="font-weight:700;color:var(--herbic-green);">{{ p.ca|prix }}</td>
                         <td style="color:var(--text-muted);">{{ p.quantite }}</td>
@@ -83,6 +159,20 @@
                     {% endfor %}
                     </tbody>
                 </table>
+                <div class="mobile-only">
+                    {% for p in top_produits_ca %}
+                    <div class="d-flex align-items-center gap-2 px-3 py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                        <div style="width:24px;text-align:center;flex-shrink:0;">{% if forloop.counter <= 3 %}<span style="color:{% if forloop.counter == 1 %}#f59e0b{% elif forloop.counter == 2 %}#94a3b8{% else %}#b87333{% endif %};">&#9733;</span>{% else %}{{ forloop.counter }}{% endif %}</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:0.85rem;">{{ p.produit.nom }}</div>
+                            <div style="font-size:0.7rem;color:var(--text-muted);">{{ p.quantite }} unités</div>
+                        </div>
+                        <strong style="color:var(--herbic-green);">{{ p.ca|prix }}</strong>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3" style="color:var(--text-muted);">Aucune vente</div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
@@ -95,13 +185,13 @@
     <div class="card-body">
         {% for cat, montant in top_categories_globale %}
         <div class="d-flex align-items-center mb-2">
-            <div style="width:160px;font-weight:600;font-size:0.88rem;">{{ cat }}</div>
-            <div style="flex:1;margin:0 12px;">
-                <div style="background:var(--border-color);border-radius:4px;height:24px;overflow:hidden;">
+            <div style="min-width:100px;max-width:160px;font-weight:600;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ cat }}</div>
+            <div style="flex:1;margin:0 10px;">
+                <div style="background:var(--border-color);border-radius:4px;height:22px;overflow:hidden;">
                     <div class="cat-bar" data-montant="{{ montant }}" style="background:var(--herbic-green);height:100%;border-radius:4px;min-width:2px;width:0%;"></div>
                 </div>
             </div>
-            <div style="font-weight:700;min-width:80px;text-align:right;">{{ montant|prix }}</div>
+            <div style="font-weight:700;min-width:70px;text-align:right;font-size:0.88rem;">{{ montant|prix }}</div>
         </div>
         {% endfor %}
     </div>
@@ -116,42 +206,6 @@
 </script>
 {% endif %}
 
-{# Classement vendeurs (directeur only) #}
-{% if vendeur_stats %}
-<div class="card mb-4">
-    <div class="card-header"><i class="bi bi-trophy me-2"></i>Classement vendeurs {{ annee }}</div>
-    <div class="card-body p-0">
-        <table class="table table-hover mb-0">
-            <thead><tr><th>#</th><th>Vendeur</th><th>CA HT</th><th>Commandes</th><th>Clients</th><th>Cultures</th></tr></thead>
-            <tbody>
-            {% for s in vendeur_stats %}
-            <tr>
-                <td>
-                    {% if forloop.counter == 1 %}<span style="color:#f59e0b;font-size:1.3rem;">&#9733;</span>
-                    {% elif forloop.counter == 2 %}<span style="color:#94a3b8;font-size:1.1rem;">&#9733;</span>
-                    {% elif forloop.counter == 3 %}<span style="color:#b87333;font-size:1rem;">&#9733;</span>
-                    {% else %}{{ forloop.counter }}{% endif %}
-                </td>
-                <td>
-                    <div class="d-flex align-items-center gap-2">
-                        <div style="width:32px;height:32px;border-radius:50%;background:var(--herbic-green-50);color:var(--herbic-green);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;">
-                            {{ s.vendeur.first_name.0|default:"?" }}{{ s.vendeur.last_name.0|default:"" }}
-                        </div>
-                        <strong>{{ s.vendeur.get_full_name|default:s.vendeur.username }}</strong>
-                    </div>
-                </td>
-                <td style="font-weight:700;color:var(--herbic-green);">{{ s.ca|prix }}</td>
-                <td>{{ s.nb_commandes }}</td>
-                <td>{{ s.nb_clients }}</td>
-                <td>{{ s.nb_cultures }}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-{% endif %}
-
 {# Analyse par client #}
 <div class="card mb-4">
     <div class="card-header"><i class="bi bi-person-lines-fill me-2"></i>Analyse par client</div>
@@ -160,7 +214,7 @@
             <div class="live-search-container" style="max-width:450px;">
                 <div class="search-bar-live">
                     <i class="bi bi-search search-icon-live"></i>
-                    <input type="text" id="client-analysis-search" class="form-control" placeholder="Rechercher un client par nom, ferme, ville..." autocomplete="off"
+                    <input type="text" id="client-analysis-search" class="form-control" placeholder="Rechercher un client..." autocomplete="off"
                            value="{% if client_detail %}{{ client_detail.client.nom_ferme }} ({{ client_detail.client.prenom }} {{ client_detail.client.nom }}){% endif %}">
                 </div>
                 <div class="live-search-results" id="client-analysis-results"></div>
@@ -172,14 +226,14 @@
         <div class="row g-3 mb-3">
             <div class="col-6 col-md-3">
                 <div class="stat-card">
-                    <div class="stat-card-value" style="color:var(--herbic-green);">{{ client_detail.ca|prix }}</div>
+                    <div class="stat-card-value" style="color:var(--herbic-green);font-size:1.2rem;">{{ client_detail.ca|prix }}</div>
                     <div class="stat-card-label">CA {{ annee }}</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="stat-card-value">{{ client_detail.nb_commandes }}</div>
-                    <div class="stat-card-label">Commandes livrées</div>
+                    <div class="stat-card-label">Cmd livrées</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
@@ -191,39 +245,41 @@
             <div class="col-6 col-md-3">
                 <div class="stat-card">
                     <div class="stat-card-value">{{ client_detail.top_produits|length }}</div>
-                    <div class="stat-card-label">Produits achetés</div>
+                    <div class="stat-card-label">Produits</div>
                 </div>
             </div>
         </div>
 
+        {# Produits du client #}
         <div class="row g-4">
-            <div class="col-md-7">
-                <h6 style="font-weight:700;font-size:0.88rem;margin-bottom:8px;">Produits achetés par {{ client_detail.client.nom_ferme }}</h6>
-                <table class="table table-sm mb-0">
-                    <thead><tr><th>Produit</th><th>Catégorie</th><th>Qté</th><th>Total HT</th></tr></thead>
-                    <tbody>
-                    {% for p in client_detail.top_produits %}
-                    <tr>
-                        <td style="font-weight:600;">{{ p.produit.nom }}</td>
-                        <td><span class="badge bg-secondary" style="font-size:0.63rem;">{{ p.produit.categorie }}</span></td>
-                        <td>{{ p.quantite }}</td>
-                        <td style="font-weight:600;color:var(--herbic-green);">{{ p.ca|prix }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="4" class="text-center" style="color:var(--text-muted);">Aucun achat</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+            <div class="{% if client_detail.top_categories %}col-md-7{% else %}col-12{% endif %}">
+                <h6 style="font-weight:700;font-size:0.85rem;margin-bottom:8px;">Produits achetés</h6>
+                {% for p in client_detail.top_produits %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="font-size:0.88rem;border-color:#f1f5f9 !important;">
+                    <div>
+                        <strong>{{ p.produit.nom }}</strong>
+                        <span class="badge bg-secondary ms-1" style="font-size:0.6rem;">{{ p.produit.categorie }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span style="color:var(--text-muted);">x{{ p.quantite }}</span>
+                        <strong style="color:var(--herbic-green);">{{ p.ca|prix }}</strong>
+                    </div>
+                </div>
+                {% empty %}
+                <p style="color:var(--text-muted);">Aucun achat</p>
+                {% endfor %}
             </div>
+            {% if client_detail.top_categories %}
             <div class="col-md-5">
-                <h6 style="font-weight:700;font-size:0.88rem;margin-bottom:8px;">Dépenses par catégorie</h6>
+                <h6 style="font-weight:700;font-size:0.85rem;margin-bottom:8px;">Par catégorie</h6>
                 {% for cat, ca in client_detail.top_categories %}
-                <div class="d-flex justify-content-between py-1 {% if not forloop.last %}border-bottom{% endif %}" style="font-size:0.88rem;border-color:#f1f5f9 !important;">
+                <div class="d-flex justify-content-between py-2 {% if not forloop.last %}border-bottom{% endif %}" style="font-size:0.88rem;border-color:#f1f5f9 !important;">
                     <span>{{ cat }}</span>
                     <strong style="color:var(--herbic-green);">{{ ca|prix }}</strong>
                 </div>
                 {% endfor %}
             </div>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -253,10 +309,9 @@ if (csInput) {
                             <strong>${c.nom_ferme}</strong> <span style="color:var(--text-muted);">${c.nom} · ${c.ville}</span>
                         </div>`;
                     });
-                    if (!html) html = '<div class="live-search-item" style="color:var(--text-muted);">Aucun client trouvé</div>';
+                    if (!html) html = '<div class="live-search-item" style="color:var(--text-muted);">Aucun client</div>';
                     csResults.innerHTML = html;
                     csResults.style.display = 'block';
-
                     csResults.querySelectorAll('[data-id]').forEach(item => {
                         item.addEventListener('mousedown', function(e) {
                             e.preventDefault();
@@ -269,10 +324,7 @@ if (csInput) {
                 });
         }, 200);
     });
-
-    csInput.addEventListener('focus', function() {
-        if (this.value.length >= 2) this.dispatchEvent(new Event('input'));
-    });
+    csInput.addEventListener('focus', function() { if (this.value.length >= 2) this.dispatchEvent(new Event('input')); });
     csInput.addEventListener('blur', () => setTimeout(() => csResults.style.display = 'none', 300));
 }
 </script>

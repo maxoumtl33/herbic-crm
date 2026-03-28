@@ -50,7 +50,8 @@ def page_statistiques(request):
 
     # === CLASSEMENT VENDEURS (directeur uniquement) ===
     vendeur_stats = []
-    if user.is_directeur():
+    # Classement vendeurs visible par vendeur ET directeur
+    if user.is_directeur() or user.is_vendeur():
         for v in User.objects.filter(role='vendeur', is_active=True):
             cmds = v.commandes_vendeur.filter(statut='livree', date_commande__year=annee)
             ca = sum((c.total for c in cmds), Decimal('0'))

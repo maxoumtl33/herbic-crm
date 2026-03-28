@@ -190,7 +190,7 @@
                 {% if reco.quantite_estimee %}
                 <div style="text-align:right;flex-shrink:0;margin-left:8px;">
                     <div style="font-weight:800;font-size:0.95rem;color:var(--herbic-green-dark);">{{ reco.quantite_estimee }}</div>
-                    <div style="font-size:0.65rem;color:#999;">QTÉ ESTIMÉE</div>
+                    <div style="font-size:0.65rem;color:#999;">{{ reco.unite_label|upper|default:"UNITÉS" }}</div>
                 </div>
                 {% endif %}
             </div>
@@ -356,7 +356,7 @@
                             </strong>
                             {% if reco.quantite_estimee %}
                             <span style="background:var(--herbic-green);color:white;border-radius:6px;padding:2px 8px;font-size:0.72rem;font-weight:700;white-space:nowrap;">
-                                {{ reco.quantite_estimee }} est.
+                                {{ reco.quantite_estimee }} {{ reco.unite_label|default:"unités" }}
                             </span>
                             {% endif %}
                         </div>

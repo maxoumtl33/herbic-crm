@@ -1,18 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 from .models import Client, Culture, ProduitArrosage, TypeCulture
 from .forms import ClientForm, CultureForm, ProduitArrosageForm, ClientSearchForm, TypeCultureForm
 from accounts.decorators import staff_required, vendeur_or_directeur, directeur_required
-from django.db.models import Count
 from products.engine import generer_recommandations
+
+
+def _check_client_access(user, client):
+    """Vérifie qu'un vendeur a accès à ce client. Directeur a toujours accès."""
+    if user.is_directeur() or user.is_superuser:
+        return True
+    if user.is_vendeur() and client.vendeur == user:
+        return True
+    if user.is_client() and client.user == user:
+        return True
+    return False
 
 
 @login_required
 def client_list(request):
     form = ClientSearchForm(request.GET)
-    clients = Client.objects.all()
+    clients = Client.objects.select_related('vendeur').all()
 
     if request.user.is_vendeur():
         clients = clients.filter(vendeur=request.user)
@@ -39,12 +49,14 @@ def client_list(request):
 def client_detail(request, pk):
     client = get_object_or_404(Client, pk=pk)
 
-    if request.user.is_client() and client.user != request.user:
+    if not _check_client_access(request.user, client):
         messages.error(request, "Accès non autorisé.")
         return redirect('accounts:dashboard')
 
-    cultures = client.cultures.all()
-    commandes = client.commandes.all()[:10]
+    cultures = client.cultures.select_related('type_culture').prefetch_related(
+        'produits_arrosage', 'suivis_pousse'
+    ).all()
+    commandes = client.commandes.select_related('vendeur').all()[:10]
 
     recommandations = generer_recommandations(client)
 
@@ -62,7 +74,7 @@ def client_create(request):
         form = ClientForm(request.POST)
         if form.is_valid():
             client = form.save(commit=False)
-            if request.user.is_vendeur() and not client.vendeur:
+            if request.user.is_vendeur():
                 client.vendeur = request.user
             client.save()
             messages.success(request, f'Client "{client.nom_ferme}" créé.')
@@ -71,26 +83,40 @@ def client_create(request):
         form = ClientForm()
         if request.user.is_vendeur():
             form.fields['vendeur'].initial = request.user.pk
+            form.fields['vendeur'].widget.attrs['disabled'] = True
     return render(request, 'clients/client_form.html', {'form': form, 'title': 'Nouveau client'})
 
 
 @vendeur_or_directeur
 def client_edit(request, pk):
     client = get_object_or_404(Client, pk=pk)
+    if not _check_client_access(request.user, client):
+        messages.error(request, "Vous ne pouvez pas modifier ce client.")
+        return redirect('accounts:dashboard')
+
     if request.method == 'POST':
         form = ClientForm(request.POST, instance=client)
         if form.is_valid():
-            form.save()
+            c = form.save(commit=False)
+            if request.user.is_vendeur():
+                c.vendeur = request.user
+            c.save()
             messages.success(request, 'Client mis à jour.')
             return redirect('clients:client_detail', pk=client.pk)
     else:
         form = ClientForm(instance=client)
+        if request.user.is_vendeur():
+            form.fields['vendeur'].widget.attrs['disabled'] = True
     return render(request, 'clients/client_form.html', {'form': form, 'title': f'Modifier {client.nom_ferme}'})
 
 
 @vendeur_or_directeur
 def culture_create(request, client_pk):
     client = get_object_or_404(Client, pk=client_pk)
+    if not _check_client_access(request.user, client):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('accounts:dashboard')
+
     if request.method == 'POST':
         form = CultureForm(request.POST)
         if form.is_valid():
@@ -109,6 +135,10 @@ def culture_create(request, client_pk):
 @vendeur_or_directeur
 def culture_edit(request, pk):
     culture = get_object_or_404(Culture, pk=pk)
+    if not _check_client_access(request.user, culture.client):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('accounts:dashboard')
+
     if request.method == 'POST':
         form = CultureForm(request.POST, instance=culture)
         if form.is_valid():
@@ -125,6 +155,10 @@ def culture_edit(request, pk):
 @vendeur_or_directeur
 def produit_arrosage_create(request, culture_pk):
     culture = get_object_or_404(Culture, pk=culture_pk)
+    if not _check_client_access(request.user, culture.client):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('accounts:dashboard')
+
     if request.method == 'POST':
         form = ProduitArrosageForm(request.POST)
         if form.is_valid():

@@ -68,7 +68,7 @@ def calculer_stats_auto(culture):
     stats = {}
 
     # 1. Taux de germination
-    if culture.population_visee and culture.population_reelle:
+    if culture.population_visee and culture.population_visee > 0 and culture.population_reelle:
         stats['taux_germination'] = round(
             (culture.population_reelle / culture.population_visee) * 100, 1
         )

@@ -55,6 +55,9 @@
             <a href="{% url 'accounts:user_list' %}" class="sidebar-link {% block sidebar_users %}{% endblock %}">
                 <i class="bi bi-person-gear"></i> Utilisateurs
             </a>
+            <a href="{% url 'accounts:journal' %}" class="sidebar-link {% block sidebar_journal %}{% endblock %}">
+                <i class="bi bi-clock-history"></i> Journal d'activité
+            </a>
             <a href="/admin/" class="sidebar-link" target="_blank">
                 <i class="bi bi-sliders"></i> Admin Django
             </a>

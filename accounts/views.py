@@ -164,3 +164,10 @@ def user_toggle_active(request, pk):
             etat = 'activé' if user_obj.is_active else 'désactivé'
             messages.success(request, f'{user_obj.get_full_name() or user_obj.username} {etat}.')
     return redirect('accounts:user_list')
+
+
+@directeur_required
+def journal_activite(request):
+    from tracking.models import JournalActivite
+    entries = JournalActivite.objects.select_related('utilisateur').all()[:100]
+    return render(request, 'accounts/journal.html', {'entries': entries})

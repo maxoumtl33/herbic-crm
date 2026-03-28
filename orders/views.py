@@ -1,13 +1,29 @@
+from datetime import timedelta
+from decimal import Decimal
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Sum, Q, F
-from decimal import Decimal
+from django.db import transaction
+from django.db.models import Sum, Q
 from .models import Commande, LigneCommande, Facture
 from .forms import CommandeForm, LigneCommandeFormSet, CommandeStatutForm
 from accounts.decorators import staff_required, vendeur_or_directeur, directeur_required
+from tracking.models import log_action
+
+
+def _check_commande_access(user, commande):
+    """Vérifie l'accès à une commande."""
+    if user.is_directeur() or user.is_superuser:
+        return True
+    if user.is_vendeur() and commande.vendeur == user:
+        return True
+    if user.is_magasin():
+        return True
+    if user.is_client():
+        client = getattr(user, 'client_profile', None)
+        return client and commande.client == client
+    return False
 
 
 @login_required
@@ -23,7 +39,7 @@ def commande_list(request):
     elif request.user.is_vendeur():
         commandes = commandes.filter(vendeur=request.user)
     elif request.user.is_magasin():
-        commandes = commandes.exclude(statut__in=['livree', 'annulee'])
+        commandes = commandes.exclude(statut__in=['livree', 'annulee', 'verification'])
 
     statut = request.GET.get('statut')
     if statut:
@@ -40,11 +56,9 @@ def commande_list(request):
 def commande_detail(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
 
-    if request.user.is_client():
-        client = getattr(request.user, 'client_profile', None)
-        if not client or commande.client != client:
-            messages.error(request, "Accès non autorisé.")
-            return redirect('accounts:dashboard')
+    if not _check_commande_access(request.user, commande):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('accounts:dashboard')
 
     return render(request, 'orders/commande_detail.html', {'commande': commande})
 
@@ -61,6 +75,8 @@ def commande_create(request):
             commande.save()
             formset.instance = commande
             formset.save()
+            log_action(request.user, 'creation', 'Commande', commande.pk,
+                       f'Commande CMD-{commande.pk:05d} créée pour {commande.client.nom_ferme}')
             messages.success(request, f'Commande CMD-{commande.pk:05d} créée.')
             return redirect('orders:commande_detail', pk=commande.pk)
     else:
@@ -80,19 +96,51 @@ def commande_create(request):
 def commande_update_statut(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        form = CommandeStatutForm(request.POST, instance=commande)
-        if form.is_valid():
-            cmd = form.save(commit=False)
-            if cmd.statut == 'en_preparation' and not cmd.preparateur:
-                cmd.preparateur = request.user
-            cmd.save()
-            messages.success(request, f'Statut mis à jour: {cmd.get_statut_display()}')
+        nouveau_statut = request.POST.get('statut')
+        if nouveau_statut and commande.peut_transitionner(nouveau_statut):
+            ancien_statut = commande.statut
+            commande.statut = nouveau_statut
+            if nouveau_statut == 'en_preparation' and not commande.preparateur:
+                commande.preparateur = request.user
+            commande.save()
+
+            # Auto-actions à la livraison
+            if nouveau_statut == 'livree':
+                _on_livraison(commande)
+
+            log_action(request.user, 'statut', 'Commande', commande.pk,
+                       f'CMD-{commande.pk:05d}: {ancien_statut} → {nouveau_statut}')
+            messages.success(request, f'Statut mis à jour: {commande.get_statut_display()}')
+        elif nouveau_statut:
+            messages.error(request, f'Transition {commande.get_statut_display()} → {nouveau_statut} non autorisée.')
     return redirect('orders:commande_detail', pk=commande.pk)
+
+
+def _on_livraison(commande):
+    """Actions automatiques quand une commande passe à 'livrée'."""
+    # 1. Déduire le stock
+    for ligne in commande.lignes.select_related('produit').all():
+        produit = ligne.produit
+        qty = int(ligne.quantite)
+        ancien_stock = produit.quantite_stock
+        produit.quantite_stock = max(0, produit.quantite_stock - qty)
+        produit.save(update_fields=['quantite_stock'])
+        log_action(None, 'stock', 'Produit', produit.pk,
+                   f'Stock {produit.nom}: {ancien_stock} → {produit.quantite_stock} (-{qty}, CMD-{commande.pk:05d})')
+
+    # 2. Auto-créer la facture si elle n'existe pas
+    if not Facture.objects.filter(commande=commande).exists():
+        echeance = timezone.now().date() + timedelta(days=30)
+        facture = Facture.objects.create(
+            commande=commande,
+            date_echeance=echeance,
+        )
+        log_action(None, 'creation', 'Facture', facture.pk,
+                   f'Facture {facture.numero} auto-créée pour CMD-{commande.pk:05d}')
 
 
 @vendeur_or_directeur
 def commande_valider(request, pk):
-    """Vendeur/directeur valide une commande client -> passe en 'nouvelle'."""
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST' and commande.statut == 'verification':
         commande.statut = 'nouvelle'
@@ -103,7 +151,6 @@ def commande_valider(request, pk):
 
 @vendeur_or_directeur
 def commande_rejeter(request, pk):
-    """Vendeur/directeur rejette une commande client."""
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST' and commande.statut == 'verification':
         commande.statut = 'annulee'
@@ -114,7 +161,6 @@ def commande_rejeter(request, pk):
 
 @staff_required
 def commande_prendre_en_charge(request, pk):
-    """Le magasin prend en charge une commande nouvelle -> en préparation."""
     commande = get_object_or_404(Commande, pk=pk)
     if commande.statut == 'nouvelle':
         commande.statut = 'en_preparation'
@@ -126,7 +172,6 @@ def commande_prendre_en_charge(request, pk):
 
 @staff_required
 def commande_preparer(request, pk):
-    """Vue de préparation: cocher les produits un par un."""
     commande = get_object_or_404(Commande, pk=pk)
     lignes = commande.lignes.select_related('produit', 'prepare_par').all()
 
@@ -137,9 +182,9 @@ def commande_preparer(request, pk):
 
 
 @staff_required
+@transaction.atomic
 def ligne_toggle_prepare(request, pk):
-    """Toggle l'état préparé d'une ligne de commande."""
-    ligne = get_object_or_404(LigneCommande, pk=pk)
+    ligne = get_object_or_404(LigneCommande.objects.select_for_update(), pk=pk)
     commande = ligne.commande
 
     if request.method == 'POST':
@@ -153,12 +198,10 @@ def ligne_toggle_prepare(request, pk):
             ligne.date_preparation = None
         ligne.save()
 
-        # Auto-transition: si tout est préparé -> prête
         if commande.tout_prepare and commande.statut == 'en_preparation':
             commande.statut = 'prete'
             commande.save()
             messages.success(request, f'CMD-{commande.pk:05d} est prête!')
-        # Si on décoche et la commande était prête -> retour en préparation
         elif not commande.tout_prepare and commande.statut == 'prete':
             commande.statut = 'en_preparation'
             commande.save()
@@ -168,7 +211,6 @@ def ligne_toggle_prepare(request, pk):
 
 @login_required
 def commande_client_create(request):
-    """Permet au client de passer une commande lui-même."""
     client = getattr(request.user, 'client_profile', None)
     if not client:
         messages.error(request, "Aucun profil client associé.")
@@ -186,7 +228,7 @@ def commande_client_create(request):
             )
             formset.instance = commande
             formset.save()
-            messages.success(request, f'Commande CMD-{commande.pk:05d} envoyée.')
+            messages.success(request, f'Commande CMD-{commande.pk:05d} envoyée pour validation.')
             return redirect('orders:commande_detail', pk=commande.pk)
     else:
         formset = LigneCommandeFormSet()
@@ -205,16 +247,17 @@ def facture_list(request):
     if statut:
         factures = factures.filter(statut=statut)
 
-    # Stats
     total_impaye = sum(
-        f.total_ttc for f in Facture.objects.filter(statut__in=['envoyee', 'en_retard'])
+        (f.total_ttc for f in Facture.objects.filter(statut__in=['envoyee', 'en_retard'])),
+        Decimal('0'),
     )
     total_paye_mois = sum(
-        f.total_ttc for f in Facture.objects.filter(
+        (f.total_ttc for f in Facture.objects.filter(
             statut='payee',
             date_paiement__month=timezone.now().month,
             date_paiement__year=timezone.now().year,
-        )
+        )),
+        Decimal('0'),
     )
     nb_en_retard = Facture.objects.filter(statut='en_retard').count()
 
@@ -230,11 +273,13 @@ def facture_list(request):
 
 @directeur_required
 def facture_create(request, commande_pk):
-    """Créer une facture à partir d'une commande livrée."""
     commande = get_object_or_404(Commande, pk=commande_pk)
-    if hasattr(commande, 'facture'):
+    if hasattr(commande, 'facture') and Facture.objects.filter(commande=commande).exists():
         messages.info(request, f'Cette commande a déjà une facture ({commande.facture.numero}).')
         return redirect('orders:facture_detail', pk=commande.facture.pk)
+    if commande.statut != 'livree':
+        messages.error(request, 'La facture ne peut être créée que pour une commande livrée.')
+        return redirect('orders:commande_detail', pk=commande.pk)
 
     echeance = timezone.now().date() + timedelta(days=30)
     facture = Facture.objects.create(

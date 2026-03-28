@@ -12,4 +12,5 @@ urlpatterns = [
     path('utilisateurs/creer/', views.user_create, name='user_create'),
     path('utilisateurs/<int:pk>/modifier/', views.user_edit, name='user_edit'),
     path('utilisateurs/<int:pk>/toggle/', views.user_toggle_active, name='user_toggle_active'),
+    path('journal/', views.journal_activite, name='journal'),
 ]

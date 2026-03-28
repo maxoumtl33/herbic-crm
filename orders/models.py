@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
 
@@ -42,12 +43,24 @@ class Commande(models.Model):
     date_modification = models.DateTimeField(auto_now=True)
     date_livraison_prevue = models.DateField('Date de livraison prévue', null=True, blank=True)
 
+    # Transitions de statut valides
+    TRANSITIONS_VALIDES = {
+        'verification': ['nouvelle', 'annulee'],
+        'nouvelle': ['en_preparation', 'annulee'],
+        'en_preparation': ['prete', 'annulee'],
+        'prete': ['en_livraison', 'en_preparation', 'annulee'],
+        'en_livraison': ['livree', 'annulee'],
+        'livree': [],
+        'annulee': [],
+    }
+
+    def peut_transitionner(self, nouveau_statut):
+        return nouveau_statut in self.TRANSITIONS_VALIDES.get(self.statut, [])
+
     @property
     def total(self):
-        return sum(
-            ligne.sous_total for ligne in self.lignes.all()
-            if ligne.sous_total is not None
-        )
+        totaux = [l.sous_total for l in self.lignes.all() if l.sous_total is not None]
+        return sum(totaux, Decimal('0'))
 
     @property
     def nb_lignes(self):

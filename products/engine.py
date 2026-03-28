@@ -118,7 +118,7 @@ def generer_recommandations(client):
 
         # Écart population
         ecart_population = None
-        if culture.population_visee and culture.population_reelle:
+        if culture.population_visee and culture.population_visee > 0 and culture.population_reelle:
             ecart_population = (
                 (culture.population_visee - culture.population_reelle)
                 / culture.population_visee

@@ -2,6 +2,47 @@ from django.db import models
 from django.conf import settings
 
 
+class JournalActivite(models.Model):
+    """Journal d'audit pour tracer toutes les actions importantes."""
+    class TypeAction(models.TextChoices):
+        CREATION = 'creation', 'Création'
+        MODIFICATION = 'modification', 'Modification'
+        SUPPRESSION = 'suppression', 'Suppression'
+        STATUT = 'statut', 'Changement de statut'
+        STOCK = 'stock', 'Mise à jour stock'
+        CONNEXION = 'connexion', 'Connexion'
+
+    utilisateur = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+    )
+    action = models.CharField(max_length=20, choices=TypeAction.choices)
+    entite = models.CharField(max_length=50, help_text='Ex: Commande, Client, Produit')
+    entite_id = models.IntegerField(null=True, blank=True)
+    description = models.TextField()
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.date:%d/%m %H:%M} - {self.utilisateur} - {self.description}"
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = "Journal d'activité"
+        verbose_name_plural = "Journal d'activité"
+
+
+def log_action(user, action, entite, entite_id, description):
+    """Helper pour créer une entrée de journal."""
+    JournalActivite.objects.create(
+        utilisateur=user,
+        action=action,
+        entite=entite,
+        entite_id=entite_id,
+        description=description,
+    )
+
+
 class SuiviPousse(models.Model):
     culture = models.ForeignKey(
         'clients.Culture',

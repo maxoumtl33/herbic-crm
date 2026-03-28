@@ -7,6 +7,7 @@ from .models import SuiviPousse, StatistiqueCulture
 from .forms import SuiviPousseForm, StatistiqueCultureForm
 from .stats_engine import calculer_stats_auto, mettre_a_jour_stats
 from accounts.decorators import vendeur_or_directeur
+from clients.views import _check_client_access
 
 
 @login_required
@@ -35,6 +36,9 @@ def suivi_list(request, culture_pk):
 @vendeur_or_directeur
 def suivi_create(request, culture_pk):
     culture = get_object_or_404(Culture, pk=culture_pk)
+    if not _check_client_access(request.user, culture.client):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('accounts:dashboard')
     if request.method == 'POST':
         form = SuiviPousseForm(request.POST, request.FILES)
         if form.is_valid():
@@ -56,6 +60,9 @@ def suivi_create(request, culture_pk):
 @vendeur_or_directeur
 def suivi_edit(request, pk):
     suivi = get_object_or_404(SuiviPousse, pk=pk)
+    if not _check_client_access(request.user, suivi.culture.client):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('accounts:dashboard')
     if request.method == 'POST':
         form = SuiviPousseForm(request.POST, request.FILES, instance=suivi)
         if form.is_valid():
@@ -73,6 +80,9 @@ def suivi_edit(request, pk):
 @vendeur_or_directeur
 def stats_edit(request, culture_pk):
     culture = get_object_or_404(Culture, pk=culture_pk)
+    if not _check_client_access(request.user, culture.client):
+        messages.error(request, "Accès non autorisé.")
+        return redirect('accounts:dashboard')
     stats, created = StatistiqueCulture.objects.get_or_create(culture=culture)
     if request.method == 'POST':
         form = StatistiqueCultureForm(request.POST, instance=stats)

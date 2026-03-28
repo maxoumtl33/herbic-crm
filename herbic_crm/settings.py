@@ -1,16 +1,16 @@
 """
 Django settings for herbic_crm project.
 """
-
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-a=(+p!-o53^liho&fkxfvij3r-tcr)j60%jakv*-_=6@$+setr'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-only-insecure-key-change-in-production')
 
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1')
 
-ALLOWED_HOSTS = ['maxoufaya33.pythonanywhere.com', 'maxoumtl33.pythonanywhere.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'maxoufaya33.pythonanywhere.com,maxoumtl33.pythonanywhere.com,127.0.0.1,localhost').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -93,9 +93,9 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 # Taxes Québec
-TAUX_TPS = 5.0      # TPS fédérale
-TAUX_TVQ = 9.975    # TVQ Québec
-TAUX_TAXES_TOTAL = TAUX_TPS + TAUX_TVQ  # 14.975%
+TAUX_TPS = 5.0
+TAUX_TVQ = 9.975
+TAUX_TAXES_TOTAL = TAUX_TPS + TAUX_TVQ
 
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:dashboard'

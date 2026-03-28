@@ -80,7 +80,6 @@ for code, nom, cat, fmt, prix, cultures, contenant, contenance, unite in produit
             'categorie': cat,
             'format_produit': fmt,
             'prix_unitaire': prix,
-            'culture_recommandee': cultures,
             'en_stock': True,
             'contenant': contenant,
             'contenance_valeur': contenance,
@@ -89,6 +88,18 @@ for code, nom, cat, fmt, prix, cultures, contenant, contenance, unite in produit
     )
     if created:
         print(f"  Produit: {nom}")
+    # Ajouter les cultures recommandées (M2M)
+    if cultures:
+        for culture_nom in cultures.split(','):
+            culture_nom = culture_nom.strip()
+            # Mapper les noms vers les codes TypeCulture
+            code_map = {'maïs': 'mais', 'soya': 'soya', 'blé': 'ble', 'orge': 'orge', 'canola': 'canola', 'foin': 'foin'}
+            code = code_map.get(culture_nom.lower(), culture_nom.lower())
+            try:
+                tc = TypeCulture.objects.get(code=code)
+                p.cultures_recommandees.add(tc)
+            except TypeCulture.DoesNotExist:
+                pass
 
 # Recommandations automatiques
 print("\n--- Création des recommandations ---")

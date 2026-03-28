@@ -8,16 +8,21 @@ class ProduitForm(forms.ModelForm):
         fields = [
             'code', 'nom', 'description', 'categorie', 'format_produit',
             'contenant', 'contenance_valeur', 'contenance_unite',
-            'prix_unitaire', 'en_stock', 'culture_recommandee', 'image',
+            'prix_unitaire', 'en_stock', 'cultures_recommandees', 'image',
         ]
+        widgets = {
+            'cultures_recommandees': forms.CheckboxSelectMultiple,
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
-            if name != 'en_stock':
-                field.widget.attrs['class'] = 'form-control'
-            else:
+            if name == 'en_stock':
                 field.widget.attrs['class'] = 'form-check-input'
+            elif name == 'cultures_recommandees':
+                pass  # CheckboxSelectMultiple, pas de form-control
+            else:
+                field.widget.attrs['class'] = 'form-control'
 
 
 class CategorieForm(forms.ModelForm):

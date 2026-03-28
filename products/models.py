@@ -91,9 +91,11 @@ class Produit(models.Model):
         null=True, blank=True,
     )
     en_stock = models.BooleanField('En stock', default=True)
-    culture_recommandee = models.CharField(
-        'Culture recommandée', max_length=200, blank=True,
-        help_text='Ex: maïs, soya, blé (séparés par des virgules)',
+    cultures_recommandees = models.ManyToManyField(
+        TypeCulture,
+        blank=True,
+        related_name='produits_recommandes',
+        verbose_name='Cultures recommandées',
     )
     image = models.ImageField(upload_to='produits/', blank=True)
     date_creation = models.DateTimeField(auto_now_add=True)

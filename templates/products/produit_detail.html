@@ -26,8 +26,11 @@
                         {% if produit.prix_unitaire %}
                         <div class="culture-detail-item"><span class="culture-detail-label">Prix unitaire</span><span class="culture-detail-value" style="font-size:1.1rem;color:var(--herbic-green);">{{ produit.prix_unitaire|prix }}</span></div>
                         {% endif %}
-                        {% if produit.culture_recommandee %}
-                        <div class="culture-detail-item"><span class="culture-detail-label">Cultures</span><span class="culture-detail-value">{{ produit.culture_recommandee }}</span></div>
+                        {% if produit.cultures_recommandees.all %}
+                        <div class="culture-detail-item">
+                            <span class="culture-detail-label">Cultures</span>
+                            <span class="culture-detail-value">{% for tc in produit.cultures_recommandees.all %}{{ tc.nom }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                        </div>
                         {% endif %}
                     </div>
                 </div>

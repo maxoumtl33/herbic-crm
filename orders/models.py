@@ -4,6 +4,7 @@ from django.conf import settings
 
 class Commande(models.Model):
     class Statut(models.TextChoices):
+        VERIFICATION = 'verification', 'En vérification'
         NOUVELLE = 'nouvelle', 'Nouvelle'
         EN_PREPARATION = 'en_preparation', 'En préparation'
         PRETE = 'prete', 'Prête'
@@ -35,6 +36,7 @@ class Commande(models.Model):
         choices=Statut.choices,
         default=Statut.NOUVELLE,
     )
+    creee_par_client = models.BooleanField('Créée par le client', default=False)
     notes = models.TextField(blank=True)
     date_commande = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)

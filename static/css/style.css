@@ -303,6 +303,7 @@ body {
     border-radius: 6px;
     letter-spacing: 0.3px;
 }
+.badge.bg-verification { background-color: #f97316 !important; }
 .badge.bg-nouvelle { background-color: #ef4444 !important; }
 .badge.bg-en_preparation { background-color: #f59e0b !important; color: #000 !important; }
 .badge.bg-prete { background-color: #06b6d4 !important; }

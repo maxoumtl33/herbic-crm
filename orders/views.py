@@ -90,6 +90,28 @@ def commande_update_statut(request, pk):
     return redirect('orders:commande_detail', pk=commande.pk)
 
 
+@vendeur_or_directeur
+def commande_valider(request, pk):
+    """Vendeur/directeur valide une commande client -> passe en 'nouvelle'."""
+    commande = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST' and commande.statut == 'verification':
+        commande.statut = 'nouvelle'
+        commande.save()
+        messages.success(request, f'CMD-{commande.pk:05d} validée et envoyée au magasin.')
+    return redirect('orders:commande_detail', pk=commande.pk)
+
+
+@vendeur_or_directeur
+def commande_rejeter(request, pk):
+    """Vendeur/directeur rejette une commande client."""
+    commande = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST' and commande.statut == 'verification':
+        commande.statut = 'annulee'
+        commande.save()
+        messages.success(request, f'CMD-{commande.pk:05d} rejetée.')
+    return redirect('orders:commande_detail', pk=commande.pk)
+
+
 @staff_required
 def commande_prendre_en_charge(request, pk):
     """Le magasin prend en charge une commande nouvelle -> en préparation."""
@@ -159,6 +181,8 @@ def commande_client_create(request):
                 client=client,
                 vendeur=client.vendeur,
                 notes=request.POST.get('notes', ''),
+                statut='verification',
+                creee_par_client=True,
             )
             formset.instance = commande
             formset.save()

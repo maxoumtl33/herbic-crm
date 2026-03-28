@@ -48,6 +48,9 @@ def dashboard(request):
         context['commandes_pretes'] = user.commandes_vendeur.filter(
             statut='prete'
         ).select_related('client').order_by('date_commande')
+        context['commandes_verification'] = user.commandes_vendeur.filter(
+            statut='verification'
+        ).select_related('client').order_by('date_commande')
         return render(request, 'accounts/dashboard_vendeur.html', context)
 
     elif user.is_magasin():
@@ -78,6 +81,9 @@ def dashboard(request):
             statut__in=['livree', 'annulee']
         ).count()
         context['commandes_recentes'] = Commande.objects.order_by('-date_commande')[:10]
+        context['commandes_verification'] = Commande.objects.filter(
+            statut='verification'
+        ).select_related('client', 'vendeur').order_by('date_commande')
         context['vendeurs'] = User.objects.filter(role='vendeur')
         # Facturation
         context['factures_impayees'] = Facture.objects.filter(

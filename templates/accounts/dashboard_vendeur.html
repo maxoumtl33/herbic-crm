@@ -54,6 +54,50 @@
     {% empty %}
     <p class="text-muted text-center py-3">Aucun client assigné.</p>
     {% endfor %}
+    {# Commandes en vérification (passées par le client) #}
+    {% if commandes_verification %}
+    <div class="info-section-title mt-3" style="color:#f97316;border-bottom-color:#fed7aa;"><i class="bi bi-shield-exclamation"></i> Validation requise</div>
+    {% for cmd in commandes_verification %}
+    <div class="info-section" style="margin-bottom:8px;border-left:3px solid #f97316;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong> - {{ cmd.client.nom_ferme }}
+                <div style="font-size:0.72rem;color:#f97316;font-weight:600;"><i class="bi bi-person"></i> Commande passée par le client</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#modal-verif-{{ cmd.pk }}">
+                <i class="bi bi-shield-check"></i> Vérifier
+            </button>
+        </div>
+    </div>
+    {# Modale de validation #}
+    <div class="modal fade" id="modal-verif-{{ cmd.pk }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#fff7ed;border-bottom:2px solid #f97316;">
+                    <h5 class="modal-title" style="color:#c2410c;"><i class="bi bi-shield-exclamation me-2"></i>Validation requise</h5>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div style="font-size:2.5rem;color:#f97316;margin-bottom:12px;"><i class="bi bi-person-badge"></i></div>
+                    <p style="font-size:1rem;font-weight:600;">CMD-{{ cmd.pk|stringformat:"05d" }} - {{ cmd.client.nom_ferme }}</p>
+                    <p style="color:var(--text-secondary);">Cette commande a été passée directement par le client.<br>Voulez-vous la valider et l'envoyer au magasin?</p>
+                    <a href="{% url 'orders:commande_detail' cmd.pk %}" style="font-size:0.85rem;color:var(--text-muted);">Voir le détail de la commande</a>
+                </div>
+                <div class="modal-footer justify-content-center" style="border-top:none;padding-top:0;">
+                    <form method="post" action="{% url 'orders:commande_rejeter' cmd.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-lg me-1"></i> Rejeter</button>
+                    </form>
+                    <form method="post" action="{% url 'orders:commande_valider' cmd.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i> Valider la commande</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
     {# Livraisons à faire #}
     {% if commandes_en_livraison %}
     <div class="info-section-title mt-3"><i class="bi bi-truck"></i> À livrer</div>
@@ -126,6 +170,36 @@
             </div>
         </div>
     </div>
+    {# Commandes en vérification desktop #}
+    {% if commandes_verification %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background:#fff7ed;color:#c2410c;">
+            <span><i class="bi bi-shield-exclamation me-2"></i>Validation requise ({{ commandes_verification.count }})</span>
+        </div>
+        <div class="card-body p-0">
+            {% for cmd in commandes_verification %}
+            <div class="d-flex justify-content-between align-items-center px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+                <div>
+                    <a href="{% url 'orders:commande_detail' cmd.pk %}"><strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong></a>
+                    <span class="ms-2" style="font-weight:600;">{{ cmd.client.nom_ferme }}</span>
+                    <span class="badge bg-verification ms-2">Commande client</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <form method="post" action="{% url 'orders:commande_rejeter' cmd.pk %}" class="d-inline" onsubmit="return confirm('Rejeter cette commande?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+                    </form>
+                    <form method="post" action="{% url 'orders:commande_valider' cmd.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg me-1"></i> Valider</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     {# Livraisons en cours #}
     {% if commandes_en_livraison %}
     <div class="card mb-4">

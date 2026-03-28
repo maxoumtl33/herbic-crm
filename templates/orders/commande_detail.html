@@ -57,6 +57,27 @@
         <a href="{% url 'orders:commande_list' %}">Commandes</a> / CMD-{{ commande.pk|stringformat:"05d" }}
     </div>
 
+    {# Bannière de vérification #}
+    {% if commande.statut == 'verification' and user.is_vendeur or commande.statut == 'verification' and user.is_directeur %}
+    <div class="card mb-4" style="border:2px solid #f97316;">
+        <div class="card-body text-center py-4">
+            <div style="font-size:2rem;color:#f97316;margin-bottom:8px;"><i class="bi bi-shield-exclamation"></i></div>
+            <h5 style="font-weight:700;color:#c2410c;">Commande passée par le client</h5>
+            <p style="color:var(--text-secondary);">Cette commande nécessite votre validation avant d'être envoyée au magasin.</p>
+            <div class="d-flex gap-3 justify-content-center mt-3">
+                <form method="post" action="{% url 'orders:commande_rejeter' commande.pk %}" onsubmit="return confirm('Rejeter cette commande?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-lg"><i class="bi bi-x-lg me-1"></i> Rejeter</button>
+                </form>
+                <form method="post" action="{% url 'orders:commande_valider' commande.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-lg me-1"></i> Valider et envoyer au magasin</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row g-4 mb-4">
         <div class="col-lg-7">
             <div class="card">

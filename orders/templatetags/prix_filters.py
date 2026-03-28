@@ -64,6 +64,21 @@ def montant_tvq(value):
 
 
 @register.filter
+def nombre(value):
+    """Formate un nombre: enlève .00, garde les décimales si utiles."""
+    if value is None:
+        return '-'
+    try:
+        val = Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        if val == val.to_integral_value():
+            return f'{int(val)}'
+        # Enlever le trailing zero: 1.50 -> 1.5
+        return f'{val.normalize()}'
+    except Exception:
+        return f'{value}'
+
+
+@register.filter
 def prix_nu(value):
     """Prix sans $."""
     if value is None:

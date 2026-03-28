@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load prix_filters %}
 {% block title %}Mon espace - Herbic CRM{% endblock %}
 {% block sidebar_dashboard %}active{% endblock %}
 {% block topbar_title %}Mon espace{% endblock %}
@@ -34,7 +35,7 @@
                 <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}" style="border-color:#f1f5f9 !important;">
                     <div>
                         <strong>{{ culture.get_type_culture_display }}</strong>
-                        <span style="color:var(--text-muted);font-size:0.85rem;"> - {{ culture.superficie_acres }} acres</span>
+                        <span style="color:var(--text-muted);font-size:0.85rem;"> - {{ culture.superficie_acres|nombre }} acres</span>
                     </div>
                     <a href="{% url 'tracking:suivi_list' culture.pk %}" class="btn btn-sm btn-outline-primary">
                         <i class="bi bi-graph-up"></i> Suivi

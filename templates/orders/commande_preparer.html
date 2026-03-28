@@ -100,7 +100,7 @@
                             </div>
                         </div>
                         <div class="text-end ms-2" style="flex-shrink:0;">
-                            <div class="prep-quantite">x {{ ligne.quantite }}</div>
+                            <div class="prep-quantite">x {{ ligne.quantite|nombre }}</div>
                             {% if ligne.prix_unitaire %}
                             <div style="font-size:0.78rem;color:var(--text-muted);">{{ ligne.prix_unitaire|prix }}/u</div>
                             {% endif %}

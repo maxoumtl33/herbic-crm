@@ -22,15 +22,15 @@
     {% if stats %}
     <div class="stat-grid">
         <div class="stat-box">
-            <div class="stat-box-value">{{ stats.taux_germination|default:"-" }}%</div>
+            <div class="stat-box-value">{{ stats.taux_germination|default:"-"|nombre }}%</div>
             <div class="stat-box-label">Germination</div>
         </div>
         <div class="stat-box">
-            <div class="stat-box-value">{{ stats.rendement_estime|default:"-" }}</div>
+            <div class="stat-box-value">{{ stats.rendement_estime|default:"-"|nombre }}</div>
             <div class="stat-box-label">Rend. estimé</div>
         </div>
         <div class="stat-box">
-            <div class="stat-box-value">{{ stats.rendement_reel|default:"-" }}</div>
+            <div class="stat-box-value">{{ stats.rendement_reel|default:"-"|nombre }}</div>
             <div class="stat-box-label">Rend. réel</div>
         </div>
         <div class="stat-box">
@@ -73,10 +73,10 @@
 
         <div class="d-flex gap-3 mt-2" style="font-size:0.85rem;">
             {% if suivi.hauteur_cm %}
-            <span><i class="bi bi-rulers text-muted"></i> {{ suivi.hauteur_cm }} cm</span>
+            <span><i class="bi bi-rulers text-muted"></i> {{ suivi.hauteur_cm|nombre }} cm</span>
             {% endif %}
             {% if suivi.densite_plants %}
-            <span><i class="bi bi-grid-3x3 text-muted"></i> {{ suivi.densite_plants }} pl/ac</span>
+            <span><i class="bi bi-grid-3x3 text-muted"></i> {{ suivi.densite_plants|nombre }} pl/ac</span>
             {% endif %}
         </div>
 
@@ -130,9 +130,9 @@
     </div>
     {% if stats %}
     <div class="row mb-4">
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.taux_germination|default:"-" }}%</h5><small class="text-muted">Germination</small></div></div></div>
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_estime|default:"-" }}</h5><small class="text-muted">Rend. estimé</small></div></div></div>
-        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_reel|default:"-" }}</h5><small class="text-muted">Rend. réel</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.taux_germination|default:"-"|nombre }}%</h5><small class="text-muted">Germination</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_estime|default:"-"|nombre }}</h5><small class="text-muted">Rend. estimé</small></div></div></div>
+        <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.rendement_reel|default:"-"|nombre }}</h5><small class="text-muted">Rend. réel</small></div></div></div>
         <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.date_semis|date:"d/m"|default:"-" }}</h5><small class="text-muted">Semis</small></div></div></div>
         <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{{ stats.date_recolte|date:"d/m"|default:"-" }}</h5><small class="text-muted">Récolte</small></div></div></div>
         <div class="col-md-2"><div class="card text-center"><div class="card-body"><h5>{% if stats.cout_total_intrants %}{{ stats.cout_total_intrants|prix }}{% else %}-{% endif %}</h5><small class="text-muted">Intrants</small></div></div></div>
@@ -150,8 +150,8 @@
                             <span class="badge bg-{{ suivi.etat_general }}">{{ suivi.get_etat_general_display }}</span>
                         </div>
                         <div>
-                            {% if suivi.hauteur_cm %}<span class="me-3"><strong>Hauteur:</strong> {{ suivi.hauteur_cm }} cm</span>{% endif %}
-                            {% if suivi.densite_plants %}<span><strong>Densité:</strong> {{ suivi.densite_plants }} plants/acre</span>{% endif %}
+                            {% if suivi.hauteur_cm %}<span class="me-3"><strong>Hauteur:</strong> {{ suivi.hauteur_cm|nombre }} cm</span>{% endif %}
+                            {% if suivi.densite_plants %}<span><strong>Densité:</strong> {{ suivi.densite_plants|nombre }} plants/acre</span>{% endif %}
                         </div>
                     </div>
                     {% if suivi.problemes_observes %}<p class="mt-2 text-danger"><strong>Problèmes:</strong> {{ suivi.problemes_observes }}</p>{% endif %}

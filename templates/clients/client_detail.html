@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load prix_filters %}
 {% block title %}{{ client.nom_ferme }} - Herbic CRM{% endblock %}
 {% block sidebar_clients %}active{% endblock %}
 {% block topbar_title %}{{ client.nom_ferme }}{% endblock %}
@@ -97,15 +98,15 @@
             {# Stats en grille #}
             <div class="row g-2 mb-2">
                 <div class="col-4 culture-stat">
-                    <div class="culture-stat-value">{{ culture.superficie_acres }}</div>
+                    <div class="culture-stat-value">{{ culture.superficie_acres|nombre }}</div>
                     <div class="culture-stat-label">Acres</div>
                 </div>
                 <div class="col-4 culture-stat">
-                    <div class="culture-stat-value">{{ culture.population_visee|default:"-" }}</div>
+                    <div class="culture-stat-value">{{ culture.population_visee|default:"-"|nombre }}</div>
                     <div class="culture-stat-label">Pop. visée</div>
                 </div>
                 <div class="col-4 culture-stat">
-                    <div class="culture-stat-value">{{ culture.population_reelle|default:"-" }}</div>
+                    <div class="culture-stat-value">{{ culture.population_reelle|default:"-"|nombre }}</div>
                     <div class="culture-stat-label">Pop. réelle</div>
                 </div>
             </div>
@@ -164,7 +165,7 @@
         <div style="font-size:0.72rem;color:#999;margin-bottom:8px;">Cliquez pour sélectionner, puis "Commander"</div>
         {% for culture, recos in recommandations.items %}
         <div style="font-size:0.78rem;color:#888;font-weight:600;margin:8px 0 4px;">
-            {{ culture.get_type_culture_display|upper }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres }} ac)
+            {{ culture.get_type_culture_display|upper }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres|nombre }} ac)
         </div>
         {% for reco in recos %}
         <div class="reco-card reco-selectable {% if reco.deja_achete %}reco-bought{% endif %}"
@@ -189,7 +190,7 @@
                 </div>
                 {% if reco.quantite_estimee %}
                 <div style="text-align:right;flex-shrink:0;margin-left:8px;">
-                    <div style="font-weight:800;font-size:0.95rem;color:var(--herbic-green-dark);">{{ reco.quantite_estimee }}</div>
+                    <div style="font-weight:800;font-size:0.95rem;color:var(--herbic-green-dark);">{{ reco.quantite_estimee|nombre }}</div>
                     <div style="font-size:0.65rem;color:#999;">{{ reco.unite_label|upper|default:"UNITÉS" }}</div>
                 </div>
                 {% endif %}
@@ -302,10 +303,10 @@
         <div class="culture-body">
             <div class="row">
                 <div class="col-md-5">
-                    <div class="culture-detail-item"><span class="culture-detail-label">Superficie</span><span class="culture-detail-value">{{ culture.superficie_acres }} acres</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Superficie</span><span class="culture-detail-value">{{ culture.superficie_acres|nombre }} acres</span></div>
                     <div class="culture-detail-item"><span class="culture-detail-label">Semence</span><span class="culture-detail-value">{{ culture.semence|default:"-" }}</span></div>
-                    <div class="culture-detail-item"><span class="culture-detail-label">Population visée</span><span class="culture-detail-value">{{ culture.population_visee|default:"-" }}</span></div>
-                    <div class="culture-detail-item"><span class="culture-detail-label">Population réelle</span><span class="culture-detail-value">{{ culture.population_reelle|default:"-" }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Population visée</span><span class="culture-detail-value">{{ culture.population_visee|default:"-"|nombre }}</span></div>
+                    <div class="culture-detail-item"><span class="culture-detail-label">Population réelle</span><span class="culture-detail-value">{{ culture.population_reelle|default:"-"|nombre }}</span></div>
                 </div>
                 <div class="col-md-7">
                     {% if culture.produits_arrosage.all %}
@@ -317,7 +318,7 @@
                         <tr>
                             <td style="font-weight:600;">{{ pa.nom_produit }}</td>
                             <td>{{ pa.dose }}</td>
-                            <td>{{ pa.quantite_totale }} {{ pa.unite }}</td>
+                            <td>{{ pa.quantite_totale|nombre }} {{ pa.unite }}</td>
                             <td style="color:var(--text-muted);">{{ pa.date_application|date:"d/m/Y"|default:"-" }}</td>
                         </tr>
                         {% endfor %}
@@ -349,7 +350,7 @@
             </p>
             {% for culture, recos in recommandations.items %}
             <h6 style="font-weight:700;font-size:0.88rem;color:var(--text-secondary);margin-top:{% if not forloop.first %}20px{% else %}0{% endif %};margin-bottom:12px;">
-                {{ culture.get_type_culture_display }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres }} acres, {{ culture.annee }})
+                {{ culture.get_type_culture_display }} - {{ culture.nom_champ|default:"" }} ({{ culture.superficie_acres|nombre }} acres, {{ culture.annee }})
             </h6>
             <div class="row g-3 mb-2">
                 {% for reco in recos %}

@@ -53,7 +53,7 @@
                     <tr>
                         <td style="color:var(--text-muted);">{{ ligne.produit.code }}</td>
                         <td style="font-weight:600;">{{ ligne.produit.nom }}</td>
-                        <td>{{ ligne.quantite }}</td>
+                        <td>{{ ligne.quantite|nombre }}</td>
                         <td>{% if ligne.prix_unitaire %}{{ ligne.prix_unitaire|prix }}{% else %}-{% endif %}</td>
                         <td style="font-weight:600;">{% if ligne.sous_total %}{{ ligne.sous_total|prix }}{% else %}-{% endif %}</td>
                     </tr>

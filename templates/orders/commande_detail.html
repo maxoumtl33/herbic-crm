@@ -86,7 +86,7 @@
         </div>
         <div class="col-lg-5">
             {% if user.has_staff_access %}
-            <div class="card">
+            <div class="card mb-3">
                 <div class="card-header">Changer le statut</div>
                 <div class="card-body">
                     <form method="post" action="{% url 'orders:commande_update_statut' commande.pk %}">
@@ -102,6 +102,28 @@
                     </form>
                 </div>
             </div>
+            {# Facturation #}
+            {% if user.is_directeur %}
+            <div class="card">
+                <div class="card-header"><i class="bi bi-receipt me-2"></i>Facturation</div>
+                <div class="card-body">
+                    {% if commande.facture %}
+                    <a href="{% url 'orders:facture_detail' commande.facture.pk %}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-receipt me-1"></i> {{ commande.facture.numero }}
+                        <span class="badge bg-facture-{{ commande.facture.statut }} ms-1">{{ commande.facture.get_statut_display }}</span>
+                    </a>
+                    {% elif commande.statut == 'livree' %}
+                    <a href="{% url 'orders:facture_create' commande.pk %}" class="btn btn-herbic w-100">
+                        <i class="bi bi-receipt-cutoff me-1"></i> Créer la facture
+                    </a>
+                    {% else %}
+                    <p class="text-center mb-0" style="color:var(--text-muted);font-size:0.85rem;">
+                        La facture pourra être créée une fois la commande livrée.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
             {% endif %}
         </div>
     </div>

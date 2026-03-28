@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load prix_filters %}
+{% block title %}Facturation - Herbic CRM{% endblock %}
+{% block sidebar_factures %}active{% endblock %}
+{% block topbar_title %}Facturation{% endblock %}
+{% block content %}
+
+{# KPIs #}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left:4px solid #f59e0b;">
+            <div class="stat-card-value" style="color:#f59e0b;">{{ total_impaye|prix }}</div>
+            <div class="stat-card-label">Total impayé</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left:4px solid #22c55e;">
+            <div class="stat-card-value" style="color:#22c55e;">{{ total_paye_mois|prix }}</div>
+            <div class="stat-card-label">Payé ce mois</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left:4px solid #ef4444;">
+            <div class="stat-card-value" style="color:#ef4444;">{{ nb_en_retard }}</div>
+            <div class="stat-card-label">En retard</div>
+        </div>
+    </div>
+</div>
+
+{# Filtres #}
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="{% url 'orders:facture_list' %}" class="btn btn-sm {% if not statut_actif %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">Toutes</a>
+    {% for val, label in statuts %}
+    <a href="?statut={{ val }}" class="btn btn-sm {% if statut_actif == val %}btn-herbic{% else %}btn-outline-primary{% endif %}" style="border-radius:20px;">{{ label }}</a>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr><th>No facture</th><th>Commande</th><th>Client</th><th>Total TTC</th><th>Statut</th><th>Émission</th><th>Échéance</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for f in factures %}
+            <tr>
+                <td><a href="{% url 'orders:facture_detail' f.pk %}" style="font-weight:700;">{{ f.numero }}</a></td>
+                <td><a href="{% url 'orders:commande_detail' f.commande.pk %}">CMD-{{ f.commande.pk|stringformat:"05d" }}</a></td>
+                <td style="font-weight:600;">{{ f.commande.client.nom_ferme }}</td>
+                <td style="font-weight:700;">{{ f.total_ttc|prix }}</td>
+                <td>
+                    <span class="badge bg-facture-{{ f.statut }}">{{ f.get_statut_display }}</span>
+                </td>
+                <td style="color:var(--text-muted);">{{ f.date_emission|date:"d/m/Y" }}</td>
+                <td style="color:{% if f.statut == 'en_retard' %}#ef4444;font-weight:600{% else %}var(--text-muted){% endif %};">{{ f.date_echeance|date:"d/m/Y"|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'orders:facture_detail' f.pk %}" class="btn btn-sm btn-outline-primary">Voir</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center py-4" style="color:var(--text-muted);">
+                Aucune facture. Les factures sont créées depuis les commandes livrées.
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

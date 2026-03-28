@@ -70,14 +70,26 @@ def dashboard(request):
         return render(request, 'accounts/dashboard_magasin.html', context)
 
     else:  # directeur
-        from orders.models import Commande
+        from orders.models import Commande, Facture
         from clients.models import Client
+        from django.utils import timezone
         context['total_clients'] = Client.objects.count()
         context['commandes_en_cours'] = Commande.objects.exclude(
             statut__in=['livree', 'annulee']
         ).count()
         context['commandes_recentes'] = Commande.objects.order_by('-date_commande')[:10]
         context['vendeurs'] = User.objects.filter(role='vendeur')
+        # Facturation
+        context['factures_impayees'] = Facture.objects.filter(
+            statut__in=['envoyee', 'en_retard']
+        ).select_related('commande', 'commande__client').order_by('date_echeance')[:5]
+        context['total_impaye'] = sum(
+            f.total_ttc for f in Facture.objects.filter(statut__in=['envoyee', 'en_retard'])
+        )
+        context['nb_factures_retard'] = Facture.objects.filter(statut='en_retard').count()
+        context['commandes_sans_facture'] = Commande.objects.filter(
+            statut='livree'
+        ).exclude(facture__isnull=False).select_related('client')[:5]
         return render(request, 'accounts/dashboard_directeur.html', context)
 
 

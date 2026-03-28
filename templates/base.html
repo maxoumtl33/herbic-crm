@@ -36,6 +36,11 @@
                 <i class="bi bi-cart3"></i> Commandes
             </a>
             {% if user.is_directeur %}
+            <a href="{% url 'orders:facture_list' %}" class="sidebar-link {% block sidebar_factures %}{% endblock %}">
+                <i class="bi bi-receipt"></i> Facturation
+            </a>
+            {% endif %}
+            {% if user.is_directeur %}
             <div class="sidebar-section">Gestion produits</div>
             <a href="{% url 'clients:type_culture_list' %}" class="sidebar-link {% block sidebar_types_culture %}{% endblock %}">
                 <i class="bi bi-flower2"></i> Types de culture

@@ -12,4 +12,9 @@ urlpatterns = [
     path('<int:pk>/preparer/', views.commande_preparer, name='commande_preparer'),
     path('ligne/<int:pk>/toggle/', views.ligne_toggle_prepare, name='ligne_toggle_prepare'),
     path('ma-commande/', views.commande_client_create, name='commande_client_create'),
+    # Facturation
+    path('factures/', views.facture_list, name='facture_list'),
+    path('factures/<int:commande_pk>/creer/', views.facture_create, name='facture_create'),
+    path('factures/<int:pk>/detail/', views.facture_detail, name='facture_detail'),
+    path('factures/<int:pk>/statut/', views.facture_update_statut, name='facture_update_statut'),
 ]

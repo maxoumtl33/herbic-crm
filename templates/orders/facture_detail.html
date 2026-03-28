@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load prix_filters %}
+{% block title %}{{ facture.numero }} - Herbic CRM{% endblock %}
+{% block sidebar_factures %}active{% endblock %}
+{% block topbar_title %}{{ facture.numero }}{% endblock %}
+{% block content %}
+
+<div class="breadcrumb-subtle">
+    <a href="{% url 'orders:facture_list' %}">Facturation</a> / {{ facture.numero }}
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        {# En-tête facture #}
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h4 style="font-weight:800;color:var(--herbic-green);margin-bottom:2px;">FACTURE</h4>
+                        <div style="font-size:1.3rem;font-weight:700;">{{ facture.numero }}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:700;font-size:1.1rem;">Herbic Inc.</div>
+                        <div style="color:var(--text-muted);font-size:0.85rem;">herbic.com</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px;">Facturer à</div>
+                        <div style="font-weight:700;">{{ facture.commande.client.nom_ferme }}</div>
+                        <div style="font-size:0.88rem;color:var(--text-secondary);">
+                            {{ facture.commande.client.prenom }} {{ facture.commande.client.nom }}<br>
+                            {{ facture.commande.client.adresse }}<br>
+                            {{ facture.commande.client.ville }}, {{ facture.commande.client.code_postal }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="culture-detail-item"><span class="culture-detail-label">No commande</span><a href="{% url 'orders:commande_detail' facture.commande.pk %}" class="culture-detail-value" style="color:var(--herbic-green);">CMD-{{ facture.commande.pk|stringformat:"05d" }}</a></div>
+                        <div class="culture-detail-item"><span class="culture-detail-label">Date d'émission</span><span class="culture-detail-value">{{ facture.date_emission|date:"d/m/Y" }}</span></div>
+                        <div class="culture-detail-item"><span class="culture-detail-label">Date d'échéance</span><span class="culture-detail-value" style="{% if facture.statut == 'en_retard' %}color:#ef4444;{% endif %}">{{ facture.date_echeance|date:"d/m/Y"|default:"-" }}</span></div>
+                        {% if facture.date_paiement %}
+                        <div class="culture-detail-item"><span class="culture-detail-label">Payée le</span><span class="culture-detail-value" style="color:#22c55e;">{{ facture.date_paiement|date:"d/m/Y" }}</span></div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {# Lignes #}
+                <table class="table mb-0">
+                    <thead><tr><th>Code</th><th>Produit</th><th>Qté</th><th>Prix unit.</th><th>Sous-total</th></tr></thead>
+                    <tbody>
+                    {% for ligne in lignes %}
+                    <tr>
+                        <td style="color:var(--text-muted);">{{ ligne.produit.code }}</td>
+                        <td style="font-weight:600;">{{ ligne.produit.nom }}</td>
+                        <td>{{ ligne.quantite }}</td>
+                        <td>{% if ligne.prix_unitaire %}{{ ligne.prix_unitaire|prix }}{% else %}-{% endif %}</td>
+                        <td style="font-weight:600;">{% if ligne.sous_total %}{{ ligne.sous_total|prix }}{% else %}-{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr><td colspan="4" class="text-end">Sous-total HT</td><td style="font-weight:600;">{{ facture.sous_total_ht|prix }}</td></tr>
+                        <tr><td colspan="4" class="text-end" style="color:var(--text-muted);font-size:0.85rem;">TPS (5%)</td><td style="color:var(--text-muted);font-size:0.85rem;">{{ facture.montant_tps|prix }}</td></tr>
+                        <tr><td colspan="4" class="text-end" style="color:var(--text-muted);font-size:0.85rem;">TVQ (9.975%)</td><td style="color:var(--text-muted);font-size:0.85rem;">{{ facture.montant_tvq|prix }}</td></tr>
+                        <tr style="background:var(--herbic-green-50);">
+                            <td colspan="4" class="text-end" style="font-weight:700;font-size:1.05rem;">Total TTC</td>
+                            <td style="font-weight:800;font-size:1.15rem;color:var(--herbic-green);">{{ facture.total_ttc|prix }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                {% if facture.notes %}
+                <div class="mt-3 p-3" style="background:var(--body-bg);border-radius:8px;font-size:0.88rem;">
+                    <strong>Notes :</strong> {{ facture.notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        {# Statut #}
+        <div class="card mb-3">
+            <div class="card-header">Statut</div>
+            <div class="card-body text-center">
+                <span class="badge bg-facture-{{ facture.statut }}" style="font-size:1rem;padding:8px 20px;">{{ facture.get_statut_display }}</span>
+                <form method="post" action="{% url 'orders:facture_update_statut' facture.pk %}" class="mt-3">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <select name="statut" class="form-select">
+                            {% for val, label in facture.StatutFacture.choices %}
+                            <option value="{{ val }}" {% if facture.statut == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-herbic" style="white-space:nowrap;">OK</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {# Actions rapides #}
+        {% if facture.statut == 'brouillon' %}
+        <form method="post" action="{% url 'orders:facture_update_statut' facture.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="statut" value="envoyee">
+            <button type="submit" class="btn btn-herbic w-100 mb-2"><i class="bi bi-send me-1"></i> Marquer envoyée</button>
+        </form>
+        {% elif facture.statut == 'envoyee' or facture.statut == 'en_retard' %}
+        <form method="post" action="{% url 'orders:facture_update_statut' facture.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="statut" value="payee">
+            <button type="submit" class="btn btn-success w-100 mb-2"><i class="bi bi-check-circle me-1"></i> Marquer payée</button>
+        </form>
+        {% endif %}
+
+        <a href="{% url 'orders:facture_list' %}" class="btn btn-outline-primary w-100">Retour aux factures</a>
+    </div>
+</div>
+{% endblock %}

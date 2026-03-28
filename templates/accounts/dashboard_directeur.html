@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load prix_filters %}
 {% block title %}Tableau de bord - Herbic CRM{% endblock %}
 {% block sidebar_dashboard %}active{% endblock %}
 {% block topbar_title %}Tableau de bord{% endblock %}
@@ -10,33 +11,79 @@
 
 {# KPIs #}
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
         <div class="stat-card">
             <div class="stat-card-value text-herbic">{{ total_clients }}</div>
             <div class="stat-card-label">Clients actifs</div>
-            <a href="{% url 'clients:client_list' %}" class="btn btn-sm btn-outline-primary mt-2">Voir tout</a>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-6 col-md-3">
         <div class="stat-card">
             <div class="stat-card-value" style="color:#f59e0b;">{{ commandes_en_cours }}</div>
             <div class="stat-card-label">Commandes en cours</div>
-            <a href="{% url 'orders:commande_list' %}" class="btn btn-sm btn-outline-primary mt-2">Voir tout</a>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <div class="stat-card-value text-herbic">{{ vendeurs.count }}</div>
-            <div class="stat-card-label">Vendeurs</div>
-            <a href="{% url 'accounts:user_list' %}" class="btn btn-sm btn-outline-primary mt-2">Gérer</a>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left:4px solid #f59e0b;">
+            <div class="stat-card-value" style="color:#f59e0b;">{{ total_impaye|prix }}</div>
+            <div class="stat-card-label">Total impayé</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card">
-            <a href="{% url 'products:produit_list' %}" class="btn btn-sm btn-outline-primary mt-1 w-100"><i class="bi bi-box-seam"></i> Catalogue produits</a>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left:4px solid #ef4444;">
+            <div class="stat-card-value" style="color:#ef4444;">{{ nb_factures_retard }}</div>
+            <div class="stat-card-label">Factures en retard</div>
         </div>
     </div>
 </div>
+
+{# Facturation urgente #}
+{% if commandes_sans_facture %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:#fffbeb;color:#92400e;">
+        <span><i class="bi bi-exclamation-triangle-fill me-2"></i>Commandes livrées sans facture</span>
+    </div>
+    <div class="card-body p-0">
+        {% for cmd in commandes_sans_facture %}
+        <div class="d-flex justify-content-between align-items-center px-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+            <div>
+                <a href="{% url 'orders:commande_detail' cmd.pk %}"><strong>CMD-{{ cmd.pk|stringformat:"05d" }}</strong></a>
+                <span class="ms-2" style="font-weight:600;">{{ cmd.client.nom_ferme }}</span>
+                <span class="ms-2" style="color:var(--text-muted);font-size:0.82rem;">{{ cmd.total|prix }} HT</span>
+            </div>
+            <a href="{% url 'orders:facture_create' cmd.pk %}" class="btn btn-sm btn-herbic">
+                <i class="bi bi-receipt-cutoff"></i> Facturer
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if factures_impayees %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background:#fef2f2;color:#991b1b;">
+        <span><i class="bi bi-clock-fill me-2"></i>Factures impayées</span>
+        <a href="{% url 'orders:facture_list' %}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr><th>Facture</th><th>Client</th><th>Total TTC</th><th>Échéance</th><th>Statut</th></tr></thead>
+            <tbody>
+            {% for f in factures_impayees %}
+            <tr>
+                <td><a href="{% url 'orders:facture_detail' f.pk %}" style="font-weight:700;">{{ f.numero }}</a></td>
+                <td>{{ f.commande.client.nom_ferme }}</td>
+                <td style="font-weight:700;">{{ f.total_ttc|prix }}</td>
+                <td style="{% if f.statut == 'en_retard' %}color:#ef4444;font-weight:600;{% else %}color:var(--text-muted);{% endif %}">{{ f.date_echeance|date:"d/m/Y"|default:"-" }}</td>
+                <td><span class="badge bg-facture-{{ f.statut }}">{{ f.get_statut_display }}</span></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 
 <div class="row g-4">
     {# Commandes récentes #}

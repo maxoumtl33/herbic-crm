@@ -321,6 +321,13 @@ body {
 .badge.bg-faible { background-color: #ef4444 !important; }
 .badge.bg-mauvais { background-color: #991b1b !important; }
 
+/* Badges factures */
+.badge.bg-facture-brouillon { background-color: #94a3b8 !important; }
+.badge.bg-facture-envoyee { background-color: #3b82f6 !important; }
+.badge.bg-facture-payee { background-color: #22c55e !important; }
+.badge.bg-facture-en_retard { background-color: #ef4444 !important; }
+.badge.bg-facture-annulee { background-color: #6b7280 !important; }
+
 /* Border état suivi */
 .border-excellent { border-left: 4px solid #15803d !important; }
 .border-bon { border-left: 4px solid #22c55e !important; }

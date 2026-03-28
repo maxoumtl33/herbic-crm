@@ -2,9 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from .models import Commande, LigneCommande
+from datetime import timedelta
+from django.db.models import Sum, Q, F
+from decimal import Decimal
+from .models import Commande, LigneCommande, Facture
 from .forms import CommandeForm, LigneCommandeFormSet, CommandeStatutForm
-from accounts.decorators import staff_required, vendeur_or_directeur
+from accounts.decorators import staff_required, vendeur_or_directeur, directeur_required
 
 
 @login_required
@@ -167,3 +170,78 @@ def commande_client_create(request):
     return render(request, 'orders/commande_client_form.html', {
         'formset': formset, 'client': client, 'title': 'Passer une commande',
     })
+
+
+# === FACTURATION ===
+
+@directeur_required
+def facture_list(request):
+    statut = request.GET.get('statut', '')
+    factures = Facture.objects.select_related('commande', 'commande__client').all()
+    if statut:
+        factures = factures.filter(statut=statut)
+
+    # Stats
+    total_impaye = sum(
+        f.total_ttc for f in Facture.objects.filter(statut__in=['envoyee', 'en_retard'])
+    )
+    total_paye_mois = sum(
+        f.total_ttc for f in Facture.objects.filter(
+            statut='payee',
+            date_paiement__month=timezone.now().month,
+            date_paiement__year=timezone.now().year,
+        )
+    )
+    nb_en_retard = Facture.objects.filter(statut='en_retard').count()
+
+    return render(request, 'orders/facture_list.html', {
+        'factures': factures,
+        'statuts': Facture.StatutFacture.choices,
+        'statut_actif': statut,
+        'total_impaye': total_impaye,
+        'total_paye_mois': total_paye_mois,
+        'nb_en_retard': nb_en_retard,
+    })
+
+
+@directeur_required
+def facture_create(request, commande_pk):
+    """Créer une facture à partir d'une commande livrée."""
+    commande = get_object_or_404(Commande, pk=commande_pk)
+    if hasattr(commande, 'facture'):
+        messages.info(request, f'Cette commande a déjà une facture ({commande.facture.numero}).')
+        return redirect('orders:facture_detail', pk=commande.facture.pk)
+
+    echeance = timezone.now().date() + timedelta(days=30)
+    facture = Facture.objects.create(
+        commande=commande,
+        date_echeance=echeance,
+    )
+    messages.success(request, f'Facture {facture.numero} créée.')
+    return redirect('orders:facture_detail', pk=facture.pk)
+
+
+@directeur_required
+def facture_detail(request, pk):
+    facture = get_object_or_404(Facture, pk=pk)
+    lignes = facture.commande.lignes.select_related('produit').all()
+    return render(request, 'orders/facture_detail.html', {
+        'facture': facture,
+        'lignes': lignes,
+    })
+
+
+@directeur_required
+def facture_update_statut(request, pk):
+    facture = get_object_or_404(Facture, pk=pk)
+    if request.method == 'POST':
+        new_statut = request.POST.get('statut')
+        if new_statut in dict(Facture.StatutFacture.choices):
+            facture.statut = new_statut
+            if new_statut == 'payee' and not facture.date_paiement:
+                facture.date_paiement = timezone.now().date()
+            elif new_statut != 'payee':
+                facture.date_paiement = None
+            facture.save()
+            messages.success(request, f'Facture {facture.numero} → {facture.get_statut_display()}')
+    return redirect('orders:facture_detail', pk=facture.pk)

@@ -393,8 +393,12 @@
 </div>
 {% endblock %}
 
-{% block fab_extra %}
-<a href="{% url 'clients:culture_create' client.pk %}" class="fab-menu-item" style="--i:3;">
+{% block fab_menu_items %}
+<a href="{% url 'orders:commande_create' %}?client={{ client.pk }}" class="fab-menu-item" style="--i:1;">
+    <span class="fab-menu-label">Nouvelle commande</span>
+    <span class="fab-menu-btn" style="background:#3b82f6;"><i class="bi bi-cart-plus-fill"></i></span>
+</a>
+<a href="{% url 'clients:culture_create' client.pk %}" class="fab-menu-item" style="--i:2;">
     <span class="fab-menu-label">Nouvelle culture</span>
     <span class="fab-menu-btn" style="background:#8b5cf6;"><i class="bi bi-flower2"></i></span>
 </a>

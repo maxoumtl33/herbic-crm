@@ -106,6 +106,7 @@
             {# Menu FAB #}
             <div id="fab-menu" class="fab-menu">
                 <div class="fab-overlay" onclick="toggleFabMenu()"></div>
+                {% block fab_menu_items %}
                 <a href="{% url 'clients:client_create' %}" class="fab-menu-item" style="--i:1;">
                     <span class="fab-menu-label">Nouveau client</span>
                     <span class="fab-menu-btn" style="background:#2e7d32;"><i class="bi bi-person-plus-fill"></i></span>
@@ -114,7 +115,7 @@
                     <span class="fab-menu-label">Nouvelle commande</span>
                     <span class="fab-menu-btn" style="background:#3b82f6;"><i class="bi bi-cart-plus-fill"></i></span>
                 </a>
-                {% block fab_extra %}{% endblock %}
+                {% endblock %}
             </div>
             <a href="{% url 'orders:commande_list' %}" class="bottom-nav-item {% block nav_commandes %}{% endblock %}">
                 <i class="bi bi-cart-fill"></i><span>Commandes</span>

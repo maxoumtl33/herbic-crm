@@ -154,8 +154,8 @@
             <a href="{% url 'orders:commande_list' %}" class="bottom-nav-item {% block nav_commandes %}{% endblock %}">
                 <i class="bi bi-cart-fill"></i><span>Commandes</span>
             </a>
-            <a href="{% url 'products:produit_list' %}" class="bottom-nav-item {% block nav_produits %}{% endblock %}">
-                <i class="bi bi-box-seam-fill"></i><span>Produits</span>
+            <a href="{% url 'accounts:statistiques' %}" class="bottom-nav-item {% block nav_stats %}{% endblock %}">
+                <i class="bi bi-pie-chart-fill"></i><span>Stats</span>
             </a>
         </nav>
         {% else %}

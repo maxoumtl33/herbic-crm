@@ -73,16 +73,6 @@
     </div>
     {% endif %}
 
-    {# Problèmes #}
-    {% if stats_auto.problemes_recents %}
-    <div class="info-section" style="border-left:3px solid #ef4444;">
-        <div style="font-weight:700;font-size:0.82rem;color:#ef4444;margin-bottom:6px;"><i class="bi bi-exclamation-triangle-fill"></i> Alertes terrain</div>
-        {% for p in stats_auto.problemes_recents %}
-        <div style="font-size:0.85rem;color:#991b1b;padding:3px 0;">{{ p }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
     {# Actions #}
     {% if user.is_vendeur or user.is_directeur %}
     <div class="d-flex gap-2 mb-3">

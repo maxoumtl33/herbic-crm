@@ -35,6 +35,11 @@
             <a href="{% url 'orders:commande_list' %}" class="sidebar-link {% block sidebar_commandes %}{% endblock %}">
                 <i class="bi bi-cart3"></i> Commandes
             </a>
+            {% if not user.is_client %}
+            <a href="{% url 'accounts:statistiques' %}" class="sidebar-link {% block sidebar_stats %}{% endblock %}">
+                <i class="bi bi-pie-chart-fill"></i> Statistiques
+            </a>
+            {% endif %}
             {% if user.is_directeur %}
             <a href="{% url 'orders:facture_list' %}" class="sidebar-link {% block sidebar_factures %}{% endblock %}">
                 <i class="bi bi-receipt"></i> Facturation

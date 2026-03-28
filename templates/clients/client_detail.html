@@ -41,17 +41,9 @@
             <i class="bi bi-geo-alt-fill"></i>
             GPS
         </a>
-        <a href="{% url 'orders:commande_create' %}?client={{ client.pk }}" class="quick-action-btn btn-order">
-            <i class="bi bi-cart-plus-fill"></i>
-            Commande
-        </a>
         <a href="{% url 'clients:client_edit' client.pk %}" class="quick-action-btn btn-edit">
             <i class="bi bi-pencil-fill"></i>
             Modifier
-        </a>
-        <a href="{% url 'clients:culture_create' client.pk %}" class="quick-action-btn btn-track">
-            <i class="bi bi-plus-circle-fill"></i>
-            Culture
         </a>
     </div>
 

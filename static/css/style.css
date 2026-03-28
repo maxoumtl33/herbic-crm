@@ -640,6 +640,10 @@ body {
     color: var(--text-muted);
     margin-bottom: 8px;
 }
+.product-card-stock {
+    font-size: 0.72rem;
+    margin-bottom: 6px;
+}
 .product-card-bottom {
     display: flex;
     justify-content: space-between;
@@ -685,6 +689,16 @@ body {
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
+}
+
+/* Stock alert in cart */
+.stock-alert-row {
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 6px 14px 6px 52px;
+    border-top: 1px dashed #f59e0b;
 }
 
 /* Alert tweaks */

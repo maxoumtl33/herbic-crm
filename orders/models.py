@@ -62,6 +62,22 @@ class Commande(models.Model):
         return self.nb_lignes > 0 and self.nb_lignes == self.nb_lignes_preparees
 
     @property
+    def alertes_stock(self):
+        """Retourne la liste des lignes dont la quantité dépasse le stock."""
+        alertes = []
+        for ligne in self.lignes.select_related('produit').all():
+            stock = ligne.produit.quantite_stock
+            qty = int(ligne.quantite)
+            if qty > stock:
+                alertes.append({
+                    'produit': ligne.produit,
+                    'demande': qty,
+                    'stock': stock,
+                    'manque': qty - stock,
+                })
+        return alertes
+
+    @property
     def progression_preparation(self):
         total = self.nb_lignes
         if total == 0:

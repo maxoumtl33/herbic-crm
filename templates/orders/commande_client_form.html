@@ -146,6 +146,14 @@ function renderGrid(products) {
                 </div>
                 <div class="product-card-name">${p.nom}</div>
                 <div class="product-card-meta">${p.code} · ${p.format}</div>
+                <div class="product-card-stock">
+                    ${p.stock <= 0
+                        ? '<span style="color:#ef4444;font-weight:600;"><i class="bi bi-x-circle"></i> Rupture</span>'
+                        : p.stock <= p.seuil
+                            ? '<span style="color:#f59e0b;font-weight:600;"><i class="bi bi-exclamation-triangle"></i> ' + p.stock + ' en stock</span>'
+                            : '<span style="color:#22c55e;"><i class="bi bi-check-circle"></i> ' + p.stock + ' en stock</span>'
+                    }
+                </div>
                 <div class="product-card-bottom">
                     <span class="product-card-price">${p.prix ? '$'+p.prix : ''}</span>
                     ${added
@@ -163,7 +171,7 @@ function renderGrid(products) {
 
 function addProduct(p) {
     if (selectedProducts.some(sp => sp.id === p.id)) return;
-    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, categorie: p.categorie, type_categorie: p.type_categorie, quantite: 1 });
+    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, categorie: p.categorie, type_categorie: p.type_categorie, quantite: 1, stock: p.stock || 0 });
     renderSelected();
     fetchProducts();
 }

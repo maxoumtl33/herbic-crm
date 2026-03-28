@@ -8,7 +8,8 @@ class ProduitForm(forms.ModelForm):
         fields = [
             'code', 'nom', 'description', 'categorie', 'format_produit',
             'contenant', 'contenance_valeur', 'contenance_unite',
-            'prix_unitaire', 'en_stock', 'cultures_recommandees', 'image',
+            'prix_unitaire', 'quantite_stock', 'seuil_alerte_stock',
+            'en_stock', 'cultures_recommandees', 'image',
         ]
         widgets = {
             'cultures_recommandees': forms.CheckboxSelectMultiple,

@@ -163,6 +163,14 @@ function renderGrid() {
                 </div>
                 <div class="product-card-name">${p.nom}</div>
                 <div class="product-card-meta">${p.code} · ${p.format}</div>
+                <div class="product-card-stock">
+                    ${p.stock <= 0
+                        ? '<span style="color:#ef4444;font-weight:600;"><i class="bi bi-x-circle"></i> Rupture</span>'
+                        : p.stock <= p.seuil
+                            ? '<span style="color:#f59e0b;font-weight:600;"><i class="bi bi-exclamation-triangle"></i> ' + p.stock + ' en stock</span>'
+                            : '<span style="color:#22c55e;"><i class="bi bi-check-circle"></i> ' + p.stock + ' en stock</span>'
+                    }
+                </div>
                 <div class="product-card-bottom">
                     <span class="product-card-price">${p.prix ? '$'+p.prix : ''}</span>
                     ${added
@@ -181,7 +189,7 @@ function renderGrid() {
 function addProduct(p, qty) {
     if (selectedProducts.some(sp => sp.id === p.id)) return;
     const q = qty ? Math.round(qty) : 1;
-    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, categorie: p.categorie, type_categorie: p.type_categorie, quantite: Math.max(1, q) });
+    selectedProducts.push({ id: p.id, nom: p.nom, code: p.code, prix: p.prix || 0, format: p.format, categorie: p.categorie, type_categorie: p.type_categorie, quantite: Math.max(1, q), stock: p.stock || 0 });
     renderSelected();
     renderGrid();
 }
@@ -232,7 +240,11 @@ function renderSelected() {
                         <div style="font-weight:700;font-size:0.95rem;">${st > 0 ? formatPrice(st) : ''}</div>
                     </div>
                 </div>
-            </div>`;
+            </div>
+            ${p.quantite > p.stock
+                ? '<div class="stock-alert-row"><i class="bi bi-exclamation-triangle-fill"></i> Stock insuffisant: ' + p.stock + ' en inventaire, ' + Math.round(p.quantite) + ' demandé (manque ' + (Math.round(p.quantite) - p.stock) + ')</div>'
+                : ''
+            }`;
         selectedList.appendChild(row);
     });
     updateTotals();

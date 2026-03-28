@@ -12,6 +12,16 @@
         <a href="{% url 'orders:commande_list' %}" class="back-btn"><i class="bi bi-arrow-left"></i></a>
         <div>CMD-{{ commande.pk|stringformat:"05d" }} <span class="badge bg-{{ commande.statut }}">{{ commande.get_statut_display }}</span></div>
     </div>
+    {# Alerte stock mobile #}
+    {% if commande.alertes_stock %}
+    <div class="info-section" style="border-left:3px solid #f59e0b;background:#fffbeb;">
+        <div style="font-weight:700;font-size:0.82rem;color:#92400e;margin-bottom:4px;"><i class="bi bi-exclamation-triangle-fill"></i> Stock insuffisant</div>
+        {% for a in commande.alertes_stock %}
+        <div style="font-size:0.82rem;color:#92400e;">{{ a.produit.nom }}: {{ a.stock }} en stock / {{ a.demande }} demandé</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="info-section">
         <div class="info-row"><span class="info-label">Client</span><a href="{% url 'clients:client_detail' commande.client.pk %}" class="info-value text-primary">{{ commande.client.nom_ferme }}</a></div>
         <div class="info-row"><span class="info-label">Date</span><span class="info-value">{{ commande.date_commande|date:"d/m/Y H:i" }}</span></div>
@@ -56,6 +66,21 @@
     <div class="breadcrumb-subtle">
         <a href="{% url 'orders:commande_list' %}">Commandes</a> / CMD-{{ commande.pk|stringformat:"05d" }}
     </div>
+
+    {# Alerte stock insuffisant #}
+    {% if commande.alertes_stock %}
+    <div class="card mb-4" style="border:1px solid #f59e0b;background:#fffbeb;">
+        <div class="card-body py-3">
+            <div style="font-weight:700;color:#92400e;margin-bottom:8px;"><i class="bi bi-exclamation-triangle-fill me-2"></i>Stock insuffisant pour certains produits</div>
+            {% for a in commande.alertes_stock %}
+            <div class="d-flex justify-content-between align-items-center py-1" style="font-size:0.88rem;">
+                <span><strong>{{ a.produit.nom }}</strong></span>
+                <span style="color:#92400e;">{{ a.stock }} en inventaire / {{ a.demande }} demandé <strong>(manque {{ a.manque }})</strong></span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     {# Bannière de vérification #}
     {% if commande.statut == 'verification' and user.is_vendeur or commande.statut == 'verification' and user.is_directeur %}

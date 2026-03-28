@@ -29,6 +29,8 @@ def api_produits(request):
         'type_categorie': p.categorie.type_categorie,
         'format': p.format_produit,
         'prix': float(p.prix_unitaire) if p.prix_unitaire else None,
+        'stock': p.quantite_stock,
+        'seuil': p.seuil_alerte_stock,
     } for p in produits[:50]]
 
     return JsonResponse({'produits': data})

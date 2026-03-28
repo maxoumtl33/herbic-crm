@@ -90,6 +90,14 @@ class Produit(models.Model):
         'Prix unitaire', max_digits=10, decimal_places=2,
         null=True, blank=True,
     )
+    quantite_stock = models.IntegerField(
+        'Quantité en inventaire', default=0,
+        help_text='Nombre d\'unités en stock (sacs, bidons...)',
+    )
+    seuil_alerte_stock = models.IntegerField(
+        'Seuil d\'alerte', default=5,
+        help_text='Alerte si le stock descend sous ce seuil',
+    )
     en_stock = models.BooleanField('En stock', default=True)
     cultures_recommandees = models.ManyToManyField(
         TypeCulture,
@@ -99,6 +107,14 @@ class Produit(models.Model):
     )
     image = models.ImageField(upload_to='produits/', blank=True)
     date_creation = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def stock_faible(self):
+        return self.quantite_stock <= self.seuil_alerte_stock and self.quantite_stock > 0
+
+    @property
+    def stock_epuise(self):
+        return self.quantite_stock <= 0
 
     @property
     def label_contenant(self):
